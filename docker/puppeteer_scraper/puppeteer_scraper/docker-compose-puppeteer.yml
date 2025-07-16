@@ -1,0 +1,14 @@
+
+services:
+  puppeteer:
+    build:
+      context: ./puppeteer_scraper
+    container_name: puppeteer
+    ports:
+      - "3001:3001"
+    networks:
+      - n8n_network
+
+networks:
+  n8n_network:
+    external: true
