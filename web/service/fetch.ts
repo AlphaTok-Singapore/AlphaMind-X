@@ -160,9 +160,9 @@ async function base<T>(url: string, options: FetchOptionType = {}, otherOptions:
       ],
       beforeRequest: [
         ...baseHooks.beforeRequest || [],
-        isPublicAPI && beforeRequestPublicAuthorization,
-        !isPublicAPI && !isMarketplaceAPI && beforeRequestAuthorization,
-      ].filter(Boolean),
+        ...(isPublicAPI ? [beforeRequestPublicAuthorization] : []),
+        ...(!isPublicAPI && !isMarketplaceAPI ? [beforeRequestAuthorization] : []),
+      ],
       afterResponse: [
         ...baseHooks.afterResponse || [],
         afterResponseErrorCode(otherOptions),
@@ -177,7 +177,10 @@ async function base<T>(url: string, options: FetchOptionType = {}, otherOptions:
       ? 'omit'
       : (options.credentials || 'include'),
     retry: {
-      methods: [],
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+      limit: 3,
+      statusCodes: [408, 413, 429, 500, 502, 503, 504],
+      backoffLimit: 10000,
     },
     ...(bodyStringify ? { json: body } : { body: body as BodyInit }),
     searchParams: params,

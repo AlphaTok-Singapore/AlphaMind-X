@@ -1,8 +1,13 @@
 -- AlphaMind 数据库初始化脚本
 -- 创建 AlphaMind 相关的数据库表和 n8n 数据库
 
--- 创建 n8n 数据库
-CREATE DATABASE n8n;
+-- 创建 n8n 数据库 (幂等化)
+CREATE DATABASE IF NOT EXISTS n8n;
+
+-- 创建 dify_plugin 数据库 (幂等化)
+CREATE DATABASE IF NOT EXISTS dify_plugin;
+\connect dify_plugin
+-- 可选：如有 plugin_daemon 需要的表，可在此处补充
 
 -- 切换到 dify 数据库添加 AlphaMind 表
 \c dify;
@@ -144,64 +149,73 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- 为相关表添加更新时间触发器
-CREATE TRIGGER update_alphamind_agents_updated_at 
-    BEFORE UPDATE ON alphamind_agents 
+-- 为相关表添加更新时间触发器 (幂等化)
+DROP TRIGGER IF EXISTS update_alphamind_agents_updated_at ON alphamind_agents;
+CREATE TRIGGER update_alphamind_agents_updated_at
+    BEFORE UPDATE ON alphamind_agents
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_alphamind_conversations_updated_at 
-    BEFORE UPDATE ON alphamind_conversations 
+DROP TRIGGER IF EXISTS update_alphamind_conversations_updated_at ON alphamind_conversations;
+CREATE TRIGGER update_alphamind_conversations_updated_at
+    BEFORE UPDATE ON alphamind_conversations
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_alphamind_datasets_updated_at 
-    BEFORE UPDATE ON alphamind_datasets 
+DROP TRIGGER IF EXISTS update_alphamind_datasets_updated_at ON alphamind_datasets;
+CREATE TRIGGER update_alphamind_datasets_updated_at
+    BEFORE UPDATE ON alphamind_datasets
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_alphamind_mcp_tools_updated_at 
-    BEFORE UPDATE ON alphamind_mcp_tools 
+DROP TRIGGER IF EXISTS update_alphamind_mcp_tools_updated_at ON alphamind_mcp_tools;
+CREATE TRIGGER update_alphamind_mcp_tools_updated_at
+    BEFORE UPDATE ON alphamind_mcp_tools
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_alphamind_user_settings_updated_at 
-    BEFORE UPDATE ON alphamind_user_settings 
+DROP TRIGGER IF EXISTS update_alphamind_user_settings_updated_at ON alphamind_user_settings;
+CREATE TRIGGER update_alphamind_user_settings_updated_at
+    BEFORE UPDATE ON alphamind_user_settings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- 插入示例数据
+-- 插入示例数据 (幂等化)
 INSERT INTO alphamind_agents (name, description, type, status, model, config, user_id) VALUES
-('通用助手', '帮助用户处理各种日常任务和问题', 'assistant', 'active', 'gpt-3.5-turbo', 
- '{"temperature": 0.7, "max_tokens": 2048, "system_prompt": "你是一个有用的AI助手。"}', 
+('通用助手', '帮助用户处理各种日常任务和问题', 'assistant', 'active', 'gpt-3.5-turbo',
+ '{"temperature": 0.7, "max_tokens": 2048, "system_prompt": "你是一个有用的AI助手。"}',
  '00000000-0000-0000-0000-000000000001'),
-('数据分析师', '专业的数据分析和可视化智能体', 'analyst', 'active', 'gpt-4', 
- '{"temperature": 0.3, "max_tokens": 4096, "system_prompt": "你是一个专业的数据分析师。"}', 
+('数据分析师', '专业的数据分析和可视化智能体', 'analyst', 'active', 'gpt-4',
+ '{"temperature": 0.3, "max_tokens": 4096, "system_prompt": "你是一个专业的数据分析师。"}',
  '00000000-0000-0000-0000-000000000001'),
-('内容创作者', '创意写作和内容生成专家', 'creator', 'inactive', 'gpt-3.5-turbo', 
- '{"temperature": 0.9, "max_tokens": 2048, "system_prompt": "你是一个创意写作专家。"}', 
+('内容创作者', '创意写作和内容生成专家', 'creator', 'inactive', 'gpt-3.5-turbo',
+ '{"temperature": 0.9, "max_tokens": 2048, "system_prompt": "你是一个创意写作专家。"}',
  '00000000-0000-0000-0000-000000000001'),
-('工作流执行器', '自动化任务执行和流程管理', 'workflow', 'training', 'gpt-4', 
- '{"temperature": 0.5, "max_tokens": 4096, "system_prompt": "你是一个工作流自动化专家。"}', 
- '00000000-0000-0000-0000-000000000001');
+('工作流执行器', '自动化任务执行和流程管理', 'workflow', 'training', 'gpt-4',
+ '{"temperature": 0.5, "max_tokens": 4096, "system_prompt": "你是一个工作流自动化专家。"}',
+ '00000000-0000-0000-0000-000000000001')
+ON CONFLICT (name, user_id) DO NOTHING;
 
--- 插入示例数据集
+-- 插入示例数据集 (幂等化)
 INSERT INTO alphamind_datasets (name, description, type, status, file_count, size_bytes, user_id) VALUES
 ('客户反馈数据', '收集的客户反馈和评价数据', 'text', 'completed', 1250, 47185920, '00000000-0000-0000-0000-000000000001'),
 ('产品图片库', '产品展示图片和宣传素材', 'image', 'completed', 890, 2254857830, '00000000-0000-0000-0000-000000000001'),
 ('培训视频', '员工培训和教学视频资料', 'video', 'processing', 45, 9328025600, '00000000-0000-0000-0000-000000000001'),
-('会议录音', '重要会议的录音文件', 'audio', 'completed', 156, 1288490188, '00000000-0000-0000-0000-000000000001');
+('会议录音', '重要会议的录音文件', 'audio', 'completed', 156, 1288490188, '00000000-0000-0000-0000-000000000001')
+ON CONFLICT (name, user_id) DO NOTHING;
 
--- 插入示例 MCP 工具
+-- 插入示例 MCP 工具 (幂等化)
 INSERT INTO alphamind_mcp_tools (name, description, category, version, status, user_id) VALUES
 ('文件处理器', '处理各种文件格式的工具', 'file', '1.0.0', 'installed', '00000000-0000-0000-0000-000000000001'),
 ('数据可视化', '生成图表和可视化的工具', 'visualization', '2.1.0', 'installed', '00000000-0000-0000-0000-000000000001'),
 ('API 连接器', '连接外部 API 的工具', 'integration', '1.5.0', 'available', '00000000-0000-0000-0000-000000000001'),
-('代码执行器', '执行代码片段的工具', 'development', '3.0.0', 'installed', '00000000-0000-0000-0000-000000000001');
+('代码执行器', '执行代码片段的工具', 'development', '3.0.0', 'installed', '00000000-0000-0000-0000-000000000001')
+ON CONFLICT (name, user_id) DO NOTHING;
 
--- 插入示例用户设置
+-- 插入示例用户设置 (幂等化)
 INSERT INTO alphamind_user_settings (user_id, theme, language, default_model, notifications) VALUES
-('00000000-0000-0000-0000-000000000001', 'system', 'zh', 'gpt-3.5-turbo', 
- '{"email": true, "browser": true, "workflow_completion": true, "agent_errors": true, "system_updates": false}');
+('00000000-0000-0000-0000-000000000001', 'system', 'zh', 'gpt-3.5-turbo',
+ '{"email": true, "browser": true, "workflow_completion": true, "agent_errors": true, "system_updates": false}')
+ON CONFLICT (user_id) DO NOTHING;
 
--- 创建视图：智能体统计
+-- 创建视图：智能体统计 (幂等化)
 CREATE OR REPLACE VIEW alphamind_agent_stats AS
-SELECT 
+SELECT
     a.id,
     a.name,
     a.type,
@@ -215,9 +229,9 @@ LEFT JOIN alphamind_conversations c ON a.id = c.agent_id
 LEFT JOIN alphamind_messages m ON c.id = m.conversation_id
 GROUP BY a.id, a.name, a.type, a.status;
 
--- 创建视图：用户活动统计
+-- 创建视图：用户活动统计 (幂等化)
 CREATE OR REPLACE VIEW alphamind_user_activity AS
-SELECT 
+SELECT
     user_id,
     COUNT(DISTINCT agent_id) as active_agents,
     COUNT(DISTINCT id) as total_conversations,
@@ -227,8 +241,8 @@ WHERE status = 'active'
 GROUP BY user_id;
 
 -- 授权
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO postgres;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO dify;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO dify;
 
 -- 完成初始化
 SELECT 'AlphaMind database initialization completed successfully!' as status;

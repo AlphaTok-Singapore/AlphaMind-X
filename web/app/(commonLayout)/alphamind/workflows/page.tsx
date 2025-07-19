@@ -311,7 +311,7 @@ export default function WorkflowsPage() {
         />
         {/* 右侧输出区 */}
         <div
-          className="right flex flex-col bg-white p-4 md:p-6"
+          className="right right-panel flex flex-col bg-white p-4 md:p-6"
           style={{
             position: 'relative',
             borderLeft: '1px solid #dde3ec',
@@ -322,6 +322,8 @@ export default function WorkflowsPage() {
             boxSizing: 'border-box',
             overflow: 'auto',
             resize: 'none',
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#dde3ec #f4f7fa',
           }}
           id="right-panel"
         >
@@ -384,7 +386,8 @@ export default function WorkflowsPage() {
               const startY = e.clientY
               const startWidth = panel.offsetWidth
               const startHeight = panel.offsetHeight
-              function onMove(ev: MouseEvent) {
+
+              const onMove = (ev: MouseEvent) => {
                 const dx = ev.clientX - startX
                 const dy = ev.clientY - startY
                 const minWidth = 320
@@ -396,10 +399,12 @@ export default function WorkflowsPage() {
                   panel.style.height = `${newHeight}px`
                 }
               }
-              function onUp() {
+
+              const onUp = () => {
                 window.removeEventListener('mousemove', onMove)
                 window.removeEventListener('mouseup', onUp)
               }
+
               window.addEventListener('mousemove', onMove)
               window.addEventListener('mouseup', onUp)
             }}
@@ -458,24 +463,28 @@ export default function WorkflowsPage() {
         /* Custom scrollbar for textarea, select, and right panel */
         textarea::-webkit-scrollbar,
         select::-webkit-scrollbar,
-        .right::-webkit-scrollbar {
+        .right::-webkit-scrollbar,
+        #right-panel::-webkit-scrollbar {
           width: 8px !important;
           background: #f4f7fa !important;
         }
         textarea::-webkit-scrollbar-thumb,
         select::-webkit-scrollbar-thumb,
-        .right::-webkit-scrollbar-thumb {
+        .right::-webkit-scrollbar-thumb,
+        #right-panel::-webkit-scrollbar-thumb {
           background: #dde3ec !important;
           border-radius: 6px !important;
         }
         textarea::-webkit-scrollbar-thumb:hover,
         select::-webkit-scrollbar-thumb:hover,
-        .right::-webkit-scrollbar-thumb:hover {
+        .right::-webkit-scrollbar-thumb:hover,
+        #right-panel::-webkit-scrollbar-thumb:hover {
           background: #bfcfe3 !important;
         }
         textarea,
         select,
-        .right {
+        .right,
+        #right-panel {
           scrollbar-width: thin !important;
           scrollbar-color: #dde3ec #f4f7fa !important;
         }
@@ -503,6 +512,71 @@ export default function WorkflowsPage() {
         body::-webkit-scrollbar-thumb:hover,
         #root::-webkit-scrollbar-thumb:hover,
         .main::-webkit-scrollbar-thumb:hover {
+          background: #bfcfe3 !important;
+        }
+
+        /* 确保右侧面板滚动条样式 */
+        #right-panel::-webkit-scrollbar {
+          width: 8px !important;
+          background: #f4f7fa !important;
+        }
+        #right-panel::-webkit-scrollbar-thumb {
+          background: #dde3ec !important;
+          border-radius: 6px !important;
+        }
+        #right-panel::-webkit-scrollbar-thumb:hover {
+          background: #bfcfe3 !important;
+        }
+
+        /* 强制右侧面板滚动条样式 */
+        .right::-webkit-scrollbar {
+          width: 8px !important;
+          background: #f4f7fa !important;
+        }
+        .right::-webkit-scrollbar-thumb {
+          background: #dde3ec !important;
+          border-radius: 6px !important;
+        }
+        .right::-webkit-scrollbar-thumb:hover {
+          background: #bfcfe3 !important;
+        }
+
+        /* 确保右侧面板的滚动条样式优先级最高 */
+        div[style*="overflow: auto"]::-webkit-scrollbar {
+          width: 8px !important;
+          background: #f4f7fa !important;
+        }
+        div[style*="overflow: auto"]::-webkit-scrollbar-thumb {
+          background: #dde3ec !important;
+          border-radius: 6px !important;
+        }
+        div[style*="overflow: auto"]::-webkit-scrollbar-thumb:hover {
+          background: #bfcfe3 !important;
+        }
+
+        /* 针对右侧面板的特定样式 */
+        .right-panel::-webkit-scrollbar {
+          width: 8px !important;
+          background: #f4f7fa !important;
+        }
+        .right-panel::-webkit-scrollbar-thumb {
+          background: #dde3ec !important;
+          border-radius: 6px !important;
+        }
+        .right-panel::-webkit-scrollbar-thumb:hover {
+          background: #bfcfe3 !important;
+        }
+
+        /* 确保右侧面板滚动条可见且颜色正确 */
+        .right::-webkit-scrollbar {
+          width: 8px !important;
+          background: #f4f7fa !important;
+        }
+        .right::-webkit-scrollbar-thumb {
+          background: #dde3ec !important;
+          border-radius: 6px !important;
+        }
+        .right::-webkit-scrollbar-thumb:hover {
           background: #bfcfe3 !important;
         }
       `}</style>

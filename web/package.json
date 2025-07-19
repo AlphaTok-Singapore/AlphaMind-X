@@ -18,7 +18,7 @@
     "and_qq >= 14.9"
   ],
   "scripts": {
-    "dev": "cross-env NODE_ENV=development NODE_OPTIONS='--inspect' next dev",
+    "dev": "next dev",
     "build": "next build",
     "start": "cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public && cross-env PORT=$npm_config_port HOSTNAME=$npm_config_host node .next/standalone/server.js",
     "lint": "pnpm eslint --cache --cache-location node_modules/.cache/eslint/.eslint-cache",
@@ -76,6 +76,7 @@
     "clsx": "^2.1.1",
     "copy-to-clipboard": "^3.3.3",
     "crypto-js": "^4.2.0",
+    "critters": "^0.0.20",
     "dayjs": "^1.11.13",
     "decimal.js": "^10.4.3",
     "dompurify": "^3.2.4",

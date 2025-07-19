@@ -651,7 +651,6 @@ def upgrade():
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP(0)'), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_system_variables'))
     )
-    op.execute('CREATE SEQUENCE IF NOT EXISTS task_id_sequence;')
 
 
 def downgrade():

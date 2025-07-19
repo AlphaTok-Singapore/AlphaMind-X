@@ -6,10 +6,10 @@ const withMDX = require('@next/mdx')({
 
 const nextConfig = {
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001',
-    NEXT_PUBLIC_DIFY_API_URL: process.env.NEXT_PUBLIC_DIFY_API_URL || 'http://localhost:5001',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://alphamind-api-1:5001',
+    NEXT_PUBLIC_DIFY_API_URL: process.env.NEXT_PUBLIC_DIFY_API_URL || 'http://alphamind-api-1:5001',
   },
-  webpack: (config, { dev, isServer }) => {
+    webpack: (config, { dev, isServer }) => {
     // 解决 Windows 路径大小写问题
     if (dev && !isServer) {
       config.watchOptions = {
@@ -19,6 +19,7 @@ const nextConfig = {
       }
       config.resolve.symlinks = false
     }
+
     return config
   },
   experimental: {
@@ -31,11 +32,15 @@ const nextConfig = {
     return [
       {
         source: '/api/alphamind/:path*',
-        destination: 'http://localhost:5100/api/:path*',
+        destination: 'http://alphamind-alphamind-api-1:8000/api/:path*',
+      },
+      {
+        source: '/console/api/:path*',
+        destination: 'http://api:5001/console/api/:path*',
       },
       {
         source: '/api/:path*',
-        destination: 'http://localhost:5001/api/:path*',
+        destination: 'http://api:5001/api/:path*',
       },
     ]
   },

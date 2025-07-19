@@ -1,8 +1,8 @@
 -- n8n 数据库初始化脚本
 -- 文件路径: docker/db/init/02-n8n-init.sql
 
--- 创建 n8n 数据库
-CREATE DATABASE n8n;
+-- 创建 n8n 数据库 (幂等化)
+CREATE DATABASE IF NOT EXISTS n8n;
 
 -- 授予权限
 GRANT ALL PRIVILEGES ON DATABASE n8n TO dify;

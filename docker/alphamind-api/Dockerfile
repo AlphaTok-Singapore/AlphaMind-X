@@ -13,6 +13,10 @@ RUN apt-get update && apt-get install -y \
     netcat-traditional \
     && rm -rf /var/lib/apt/lists/*
 
+# 安装 PostgreSQL 客户端工具，确保 pg_isready 可用
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/* || \
+    apk add --no-cache postgresql-client
+
 # 复制 requirements 文件
 COPY requirements.txt /app/requirements.txt
 

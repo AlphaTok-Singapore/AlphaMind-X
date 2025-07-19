@@ -13,8 +13,8 @@ RUN npm install -g pnpm
 
 # 复制 package 文件
 COPY package*.json pnpm-lock.yaml ./
-ENV NODE_ENV=production
-RUN pnpm install --prod
+ENV NODE_ENV=development
+RUN pnpm install
 
 # 复制应用代码
 COPY ./ ./
@@ -23,11 +23,9 @@ COPY ./ ./
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 # 构建应用
-RUN npm run build
-
 # 暴露端口
 EXPOSE 3000
 
-# 启动应用
-CMD ["npm", "start"]
+# 启动开发服务器，绑定到 0.0.0.0 以便主机访问
+CMD ["pnpm", "dev", "--", "--hostname", "0.0.0.0"]
 
