@@ -9,26 +9,26 @@ const nextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://alphamind-api-1:5001',
     NEXT_PUBLIC_DIFY_API_URL: process.env.NEXT_PUBLIC_DIFY_API_URL || 'http://alphamind-api-1:5001',
   },
-    webpack: (config, { dev, isServer }) => {
+  webpack: (config, { dev, isServer }) => {
     // 解决 Windows 路径大小写问题
     if (dev && !isServer) {
       config.watchOptions = {
         ignored: [
-          /node_modules/,
-          /\.git/,
-          /\.next/,
-          /temp/,
-          /docs/,
-          /docker/,
-          /scripts/,
-          /tests/,
-          /sdks/,
-          /images/,
-          /backup\.sql/,
-          /\.env/,
-          /\.md$/,
-          /\.txt$/,
-          /\.log$/,
+          '**/node_modules/**',
+          '**/.git/**',
+          '**/.next/**',
+          '**/temp/**',
+          '**/docs/**',
+          '**/docker/**',
+          '**/scripts/**',
+          '**/tests/**',
+          '**/sdks/**',
+          '**/images/**',
+          '**/backup.sql',
+          '**/.env*',
+          '**/*.md',
+          '**/*.txt',
+          '**/*.log',
         ],
         aggregateTimeout: 500,
         poll: 2000,
@@ -43,8 +43,6 @@ const nextConfig = {
     turbo: {
       rules: {},
     },
-    // 优化 Fast Refresh
-    fastRefresh: true,
   },
   async rewrites() {
     return [
