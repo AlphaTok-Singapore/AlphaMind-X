@@ -24,8 +24,8 @@ export default function Home() {
         console.log('Setup status response:', setupStatus)
 
         if (setupStatus.step === 'not_started') {
-          console.log('Setup not started, redirecting to /init')
-          window.location.href = '/init'
+          console.log('Setup not started, redirecting to /install')
+          window.location.href = '/install'
           return
         }
         else if (setupStatus.step !== 'finished') {

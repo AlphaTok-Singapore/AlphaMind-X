@@ -1,5 +1,5 @@
 {
-  "name": "AI_social_post_generator_v17_n8n",
+  "name": "AI_social_post_generator",
   "nodes": [
     {
       "parameters": {
@@ -12,11 +12,11 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -4160,
-        -220
+        -2400,
+        -208
       ],
       "webhookId": "webpage-social",
-      "id": "ebfecf29-4303-480d-8e20-40e681c5d073",
+      "id": "3d63178f-2276-4960-ac5a-a67149780e20",
       "nodeNumber": 1
     },
     {
@@ -27,10 +27,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
       "position": [
-        -3960,
-        -420
+        -2208,
+        -416
       ],
-      "id": "80c113bf-cfc8-4830-8634-94ae171b8d18",
+      "id": "11963833-cb68-49ed-931e-ddf733022393",
       "nodeNumber": 2
     },
     {
@@ -48,10 +48,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        -3940,
-        -20
+        -2176,
+        -16
       ],
-      "id": "1b2e77a2-abf6-4948-917e-14be29d49591",
+      "id": "6f139540-9aaa-4593-90ff-1896af41193e",
       "nodeNumber": 3
     },
     {
@@ -62,10 +62,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
       "position": [
-        -3740,
-        -360
+        -1984,
+        -352
       ],
-      "id": "a4f6306f-1d9e-46fe-9ee2-192e91a0a5ff",
+      "id": "0e6a89dc-ae57-4947-982e-2a1b40123f22",
       "nodeNumber": 4
     },
     {
@@ -83,10 +83,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        -3680,
-        -100
+        -1920,
+        -96
       ],
-      "id": "c161a9b6-4530-4a8d-9ed7-8900298cbfe4",
+      "id": "0d5f74ee-09c4-4c24-9290-143b04a05840",
       "nodeNumber": 4
     },
     {
@@ -102,24 +102,24 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -3460,
+        -1696,
         -240
       ],
-      "id": "218e4164-ca64-45f7-a891-92639af772b2",
+      "id": "345ba703-6ac1-4326-ac18-b04b4d7b4226",
       "nodeNumber": 4
     },
     {
       "parameters": {
-        "jsCode": "let html = $json.html || '';\nlet seoPromptTemplate = $node['2-Prepare Content'].json.seoPrompt || '';\n\nconst defaultSeoTemplate = '你是一个网页内容分析助手，请根据以下 HTML 提取：\\n1. 网页主题（Topic）一句话\\n2. 关键词（不超过5个）\\n3. Hashtags（格式如 #AI #自动化，最多10个）\\n\\n请严格以以下 JSON 格式返回：\\n{\\n  \"Topic\": \"...\",\\n  \"Keywords\": [\"...\", \"...\"],\\n  \"Hashtags\": [\"#...\", \"#...\"]\\n}\\n\\n网页内容如下：\\n{content}';\n\nlet template = seoPromptTemplate || defaultSeoTemplate;\nif (!template.includes('{content}')) {\n  template = defaultSeoTemplate;\n}\nlet contentToUse = html.trim() || '没有可用内容';\n\nlet seoPrompt = template\n  .replace(/{content}/g, contentToUse)\n  .replace(/\\{\\{\\s*\\$json\\.html\\s*\\|\\|\\s*\\$json\\.body\\s*\\}\\}/g, contentToUse)\n  .replace(/\\{\\{\\$json\\.html\\s*\\|\\|\\s*\\$json\\.body\\}\\}/g, contentToUse)\n  .replace(/\\{\\{\\s*\\$json\\.html\\s*\\}\\}/g, contentToUse)\n  .replace(/\\{\\{\\$json\\.html\\}\\}/g, contentToUse)\n  .replace(/\\{\\{\\s*\\$json\\.body\\s*\\}\\}/g, contentToUse)\n  .replace(/\\{\\{\\$json\\.body\\}\\}/g, contentToUse);\n\nlet debugTemplate = template;\nlet debugContentLength = contentToUse.length;\nlet debugSeoPrompt = seoPrompt;\nlet debugHtml = contentToUse;\nlet debugJsonHtml = JSON.stringify($json);\nlet debugNodeData = JSON.stringify($node['2-Prepare Content'].json);\nlet debugTemplateUsed = seoPromptTemplate ? 'custom' : 'default';\nlet debugPlaceholdersFound = [];\nif (template.includes('{content}')) debugPlaceholdersFound.push('{content}');\nif (template.match(/\\{\\{\\s*\\$json\\.html\\s*\\|\\|\\s*\\$json\\.body\\s*\\}\\}/)) debugPlaceholdersFound.push('{{ $json.html || $json.body }}');\nif (template.match(/\\{\\{\\$json\\.html\\s*\\|\\|\\s*\\$json\\.body\\}\\}/)) debugPlaceholdersFound.push('{{$json.html||$json.body}}');\nif (template.match(/\\{\\{\\s*\\$json\\.html\\s*\\}\\}/)) debugPlaceholdersFound.push('{{ $json.html }}');\nif (template.match(/\\{\\{\\s*\\$json\\.body\\s*\\}\\}/)) debugPlaceholdersFound.push('{{ $json.body }}');\n\nreturn [{ json: {\n  html,\n  seoPrompt,\n  debugSeoPrompt,\n  debugHtml,\n  debugJsonHtml,\n  debugNodeData,\n  debugContentLength,\n  debugTemplate,\n  debugTemplateUsed,\n  debugPlaceholdersFound,\n  postPrompt: $node['2-Prepare Content'].json.postPrompt,\n  model: $node['2-Prepare Content'].json.model,\n  provider: $node['2-Prepare Content'].json.provider\n} }];"
+        "jsCode": "let html = $json.html || '';\nlet seoPromptTemplate = $node['2-Prepare Content'].json.seoPrompt || '';\n\n// 必须使用前端传入的提示词，不允许硬编码\nif (!seoPromptTemplate || seoPromptTemplate.trim() === '') {\n  return [{ json: { \n    error: 'No SEO prompt provided from frontend',\n    html,\n    debug: 'Frontend must provide seoPrompt parameter'\n  } }];\n}\n\nlet template = seoPromptTemplate;\nlet contentToUse = html.trim() || 'No available content';\n\nlet seoPrompt = template\n  .replace(/{content}/g, contentToUse)\n  .replace(/\\{\\{\\s*\\$json\\.html\\s*\\|\\|\\s*\\$json\\.body\\s*\\}\\}/g, contentToUse)\n  .replace(/\\{\\{\\$json\\.html\\s*\\|\\|\\s*\\$json\\.body\\}\\}/g, contentToUse)\n  .replace(/\\{\\{\\s*\\$json\\.html\\s*\\}\\}/g, contentToUse)\n  .replace(/\\{\\{\\$json\\.html\\}\\}/g, contentToUse)\n  .replace(/\\{\\{\\s*\\$json\\.body\\s*\\}\\}/g, contentToUse)\n  .replace(/\\{\\{\\$json\\.body\\}\\}/g, contentToUse);\n\nlet debugTemplate = template;\nlet debugContentLength = contentToUse.length;\nlet debugSeoPrompt = seoPrompt;\nlet debugHtml = contentToUse;\nlet debugJsonHtml = JSON.stringify($json);\nlet debugNodeData = JSON.stringify($node['2-Prepare Content'].json);\nlet debugTemplateUsed = 'frontend-provided';\nlet debugPlaceholdersFound = [];\nif (template.includes('{content}')) debugPlaceholdersFound.push('{content}');\nif (template.match(/\\{\\{\\s*\\$json\\.html\\s*\\|\\|\\s*\\$json\\.body\\s*\\}\\}/)) debugPlaceholdersFound.push('{{ $json.html || $json.body }}');\nif (template.match(/\\{\\{\\$json\\.html\\s*\\|\\|\\s*\\$json\\.body\\}\\}/)) debugPlaceholdersFound.push('{{$json.html||$json.body}}');\nif (template.match(/\\{\\{\\s*\\$json\\.html\\s*\\}\\}/)) debugPlaceholdersFound.push('{{ $json.html }}');\nif (template.match(/\\{\\{\\s*\\$json\\.body\\s*\\}\\}/)) debugPlaceholdersFound.push('{{ $json.body }}');\n\nreturn [{ json: {\n  html,\n  seoPrompt,\n  debugSeoPrompt,\n  debugHtml,\n  debugJsonHtml,\n  debugNodeData,\n  debugContentLength,\n  debugTemplate,\n  debugTemplateUsed,\n  debugPlaceholdersFound,\n  postPrompt: $node['2-Prepare Content'].json.postPrompt,\n  model: $node['2-Prepare Content'].json.model,\n  provider: $node['2-Prepare Content'].json.provider\n} }];"
       },
       "name": "5-Set Prompt (SEO)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
       "position": [
-        -3340,
-        -20
+        -1584,
+        -16
       ],
-      "id": "88158b1b-b817-4ef9-8a3a-1ea76828f22b",
+      "id": "341ebcbb-2651-4a81-872b-5e7c22b99c34",
       "nodeNumber": 5
     },
     {
@@ -131,10 +131,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
       "position": [
-        -3200,
-        -180
+        -1440,
+        -176
       ],
-      "id": "80aa3c6e-767b-4b8a-a434-ffae25c1ee69",
+      "id": "fcc12e21-f27c-41ac-b181-6cd129420c7d",
       "nodeNumber": 6
     },
     {
@@ -143,12 +143,7 @@
         "url": "http://host.docker.internal:11434/api/generate",
         "jsonParameters": true,
         "options": {
-          "timeout": 60000,
-          "retry": {
-            "enabled": true,
-            "maxTries": 3,
-            "waitTime": 2000
-          }
+          "timeout": 180000
         },
         "bodyParametersJson": "={{ JSON.stringify({ model: $json.model || 'qwen2.5vl:7b', prompt: $json.seoPrompt || 'Extract topic, keywords and hashtags from the content.', stream: false }) }}"
       },
@@ -156,10 +151,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -2980,
-        -500
+        -1216,
+        -496
       ],
-      "id": "409bc399-8308-4de1-aea3-0513fdbb8ee6",
+      "id": "6087c806-8514-4fa4-b473-183708e65036",
       "nodeNumber": 7
     },
     {
@@ -170,10 +165,10 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -2840,
-        -500
+        -1088,
+        -496
       ],
-      "id": "0a0383b4-f714-4979-94e9-d3fd279ea468",
+      "id": "b7ec55bb-74df-4e99-b368-d3be227780d4",
       "nodeNumber": 71
     },
     {
@@ -184,10 +179,10 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -2960,
-        -280
+        -1200,
+        -272
       ],
-      "id": "9b11cd47-0be8-4c18-abd3-58034d3eb9f8",
+      "id": "ed7b8c91-6740-4877-8d10-429911c62e16",
       "nodeNumber": 8
     },
     {
@@ -198,10 +193,10 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -2840,
-        -280
+        -1088,
+        -272
       ],
-      "id": "84fb0134-4729-4f06-a925-738cb9be57bf",
+      "id": "a52960de-c8e8-4ff5-8176-2844f13012b1",
       "nodeNumber": 81
     },
     {
@@ -212,10 +207,10 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -2960,
+        -1200,
         -80
       ],
-      "id": "ba5250f9-571e-4015-b43c-cc3fa69eccbe",
+      "id": "214ebb0c-ce83-44d0-8d7c-796c4cd7abed",
       "nodeNumber": 9
     },
     {
@@ -226,38 +221,38 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -2840,
+        -1088,
         -80
       ],
-      "id": "c8472a6c-01b6-425f-be3b-2423d56f1fc0",
+      "id": "54bfd717-47d1-489d-9af7-f3a15aab0ca8",
       "nodeNumber": 91
     },
     {
       "parameters": {
-        "functionCode": "const result = {\n  Topic: $json.Topic || 'General topic',\n  Keywords: $json.Keywords || ['AI', 'automation'],\n  Hashtags: $json.Hashtags || ['#AI', '#automation'],\n  provider: $json.provider || $node[\"2-Prepare Content\"].json.provider || 'Ollama',\n  model: $json.model || $node[\"2-Prepare Content\"].json.model || 'qwen2.5vl:7b',\n  postPrompt: $json.postPrompt || $node[\"2-Prepare Content\"].json.postPrompt || '请根据以下主题和关键词，写一篇适合社交媒体发布的文案。要求：\\n\\n1. 开头要有吸引人的标题或开场白\\n2. 正文分2-3个段落，每段之间空行分隔\\n3. 内容要有实用价值和见解\\n4. 结尾要有鼓励互动的呼吁\\n5. 在文案末尾单独一行添加相关hashtags\\n\\n主题: {topic}\\n关键词: {keywords}\\n建议hashtags: {hashtags}\\n\\n请按以下格式输出社交媒体文案（不要包含\\\"标题:\\\"、\\\"钩子:\\\"、\\\"CTA:\\\"等标签）：\\n\\n[吸引人的开场/标题]\\n\\n[第一段内容 - 引入话题]\\n\\n[第二段内容 - 核心观点或价值]\\n\\n[第三段内容 - 互动呼吁]\\n\\n[hashtags]'\n};\nreturn [{ json: result }];\n"
+        "functionCode": "const result = {\n  Topic: $json.Topic || 'General topic',\n  Keywords: $json.Keywords || ['AI', 'automation'],\n  Hashtags: $json.Hashtags || ['#AI', '#automation'],\n  provider: $json.provider || $node[\"2-Prepare Content\"].json.provider || 'Ollama',\n  model: $json.model || $node[\"2-Prepare Content\"].json.model || 'qwen2.5vl:7b',\n  postPrompt: $json.postPrompt || $node[\"2-Prepare Content\"].json.postPrompt || 'Please write a social media post based on the following topic and keywords. Requirements:\\n\\n1. Start with an engaging title or opening\\n2. Body in 2-3 paragraphs with blank lines between them\\n3. Content should have practical value and insights\\n4. End with an encouraging call for interaction\\n5. Add relevant hashtags on a separate line at the end\\n\\nTopic: {topic}\\nKeywords: {keywords}\\nSuggested hashtags: {hashtags}\\n\\nPlease output in the following social media post format (do not include labels like \\\"Title:\\\", \\\"Hook:\\\", \\\"CTA:\\\"):\\n\\n[Engaging opening/title]\\n\\n[First paragraph - Introduce the topic]\\n\\n[Second paragraph - Core point or value]\\n\\n[Third paragraph - Call for interaction]\\n\\n[hashtags]'\n};\nreturn [{ json: result }];\n"
       },
       "name": "10-Parse SEO JSON",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -2620,
-        -340
+        -864,
+        -336
       ],
-      "id": "2adee0d2-9aff-46ee-8ce3-2739bf53140b",
+      "id": "fa204e68-3472-4522-ac16-9f14fc7b945a",
       "nodeNumber": 10
     },
     {
       "parameters": {
-        "jsCode": "let topic = $json.Topic || '未知主题';\nlet keywords = $json.Keywords || [];\nlet hashtags = $json.Hashtags || [];\nlet postPromptTemplate = $json.postPrompt || '';\n\nconst defaultPostTemplate = '请根据以下主题和关键词，写一篇适合社交媒体发布的文案。要求：\\n\\n1. 开头要有吸引人的标题或开场白\\n2. 正文分2-3个段落，每段之间空行分隔\\n3. 内容要有实用价值和见解\\n4. 结尾要有鼓励互动的呼吁\\n5. 在文案末尾单独一行添加相关hashtags\\n\\n主题: {topic}\\n关键词: {keywords}\\n建议hashtags: {hashtags}\\n\\n请按以下格式输出社交媒体文案（不要包含\\\"标题:\\\"、\\\"钩子:\\\"、\\\"CTA:\\\"等标签）：\\n\\n[吸引人的开场/标题]\\n\\n[第一段内容 - 引入话题]\\n\\n[第二段内容 - 核心观点或价值]\\n\\n[第三段内容 - 互动呼吁]\\n\\n[hashtags]';\n\nlet template = postPromptTemplate || defaultPostTemplate;\nif (!template.includes('{topic}') && !template.includes('{keywords}') && !template.includes('{hashtags}')) {\n  template = defaultPostTemplate;\n}\n\nlet postPrompt = template\n  .replace(/{topic}/g, topic)\n  .replace(/{keywords}/g, keywords.join(', '))\n  .replace(/{hashtags}/g, hashtags.join(' '))\n  .replace(/\\{\\{\\s*\\$json\\.Topic\\s*\\}\\}/g, topic)\n  .replace(/\\{\\{\\s*\\(\\$json\\.Keywords\\s*\\|\\|\\s*\\[\\]\\)\\.join\\(.*?\\)\\s*\\}\\}/g, keywords.join(', '))\n  .replace(/\\{\\{\\s*\\(\\$json\\.Hashtags\\s*\\|\\|\\s*\\[\\]\\)\\.join\\(.*?\\)\\s*\\}\\}/g, hashtags.join(' '));\n\nlet debugPostTemplate = template;\nlet debugTopicUsed = topic;\nlet debugKeywordsUsed = keywords.join(', ');\nlet debugHashtagsUsed = hashtags.join(' ');\nlet debugPostPrompt = postPrompt;\nlet debugPostTemplateUsed = postPromptTemplate ? 'custom' : 'default';\n\nreturn [{ json: {\n  ...$json,\n  postPrompt,\n  debugPostTemplate,\n  debugTopicUsed,\n  debugKeywordsUsed,\n  debugHashtagsUsed,\n  debugPostPrompt,\n  debugPostTemplateUsed\n} }];"
+        "jsCode": "let topic = $json.Topic || 'Unknown topic';\nlet keywords = $json.Keywords || [];\nlet hashtags = $json.Hashtags || [];\nlet postPromptTemplate = $json.postPrompt || '';\n\n// 必须使用前端传入的提示词，不允许硬编码\nif (!postPromptTemplate || postPromptTemplate.trim() === '') {\n  return [{ json: { \n    error: 'No post prompt provided from frontend',\n    topic,\n    keywords,\n    hashtags,\n    debug: 'Frontend must provide postPrompt parameter'\n  } }];\n}\n\nlet template = postPromptTemplate;\n\nlet postPrompt = template\n  .replace(/{topic}/g, topic)\n  .replace(/{keywords}/g, keywords.join(', '))\n  .replace(/{hashtags}/g, hashtags.join(' '))\n  .replace(/\\{\\{\\s*\\$json\\.Topic\\s*\\}\\}/g, topic)\n  .replace(/\\{\\{\\s*\\(\\$json\\.Keywords\\s*\\|\\|\\s*\\[\\]\\)\\.join\\(.*?\\)\\s*\\}\\}/g, keywords.join(', '))\n  .replace(/\\{\\{\\s*\\(\\$json\\.Hashtags\\s*\\|\\|\\s*\\[\\]\\)\\.join\\(.*?\\)\\s*\\}\\}/g, hashtags.join(' '));\n\nlet debugPostTemplate = template;\nlet debugTopicUsed = topic;\nlet debugKeywordsUsed = keywords.join(', ');\nlet debugHashtagsUsed = hashtags.join(' ');\nlet debugPostPrompt = postPrompt;\nlet debugPostTemplateUsed = 'frontend-provided';\n\nreturn [{ json: {\n  ...$json,\n  postPrompt,\n  debugPostTemplate,\n  debugTopicUsed,\n  debugKeywordsUsed,\n  debugHashtagsUsed,\n  debugPostPrompt,\n  debugPostTemplateUsed\n} }];"
       },
       "name": "11-Set Post Prompt",
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
       "position": [
-        -2600,
-        -100
+        -848,
+        -96
       ],
-      "id": "62919067-d349-43d6-bff2-be034964eb5c",
+      "id": "38275571-d867-47b5-b234-18dbac5b33ff",
       "nodeNumber": 11
     },
     {
@@ -269,10 +264,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
       "position": [
-        -2420,
-        -120
+        -656,
+        -112
       ],
-      "id": "6a8d198c-ac4d-4468-bfa6-4590d7d9fa6d",
+      "id": "4d593730-03f0-4d87-a07c-42fe94033224",
       "nodeNumber": 12
     },
     {
@@ -281,12 +276,7 @@
         "url": "http://host.docker.internal:11434/api/generate",
         "jsonParameters": true,
         "options": {
-          "timeout": 60000,
-          "retry": {
-            "enabled": true,
-            "maxTries": 3,
-            "waitTime": 2000
-          }
+          "timeout": 180000
         },
         "bodyParametersJson": "={{ JSON.stringify({ model: $json.model || 'qwen2.5vl:7b', prompt: $json.postPrompt || 'Generate a social media post.', stream: false }) }}"
       },
@@ -294,51 +284,51 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -2200,
-        -420
+        -448,
+        -416
       ],
-      "id": "c6f3d797-55a3-4aec-b07d-7892439e21fd",
+      "id": "32eaa07e-3d1b-4798-bd3e-5f8ba8edfed8",
       "nodeNumber": 13
     },
     {
       "parameters": {
-        "functionCode": "let raw = $json.response || '';\nif (!raw || raw.trim() === '') {\n  return [{ json: { post: 'Error: No content generated from Ollama. Check model and prompt.', model: $json.model || '', provider: 'Ollama', debug: 'Empty response from Ollama', requestData: JSON.stringify($input) } }];\n}\n\nraw = raw.replace(/^```\\w*\\s*\\n/, '').replace(/\\n\\s*```$/, '').trim();\n\nif (raw.startsWith('\"') && raw.endsWith('\"')) {\n  raw = raw.slice(1, -1);\n}\n\nraw = raw.replace(/<think>[\\s\\S]*?<\\/think>/gi, '').trim();\n\nfunction formatSocialPost(content) {\n  let formatted = content\n    .replace(/^标题[:：]\\s*/gm, '')\n    .replace(/^钩子[:：]\\s*/gm, '')\n    .replace(/^CTA[:：]\\s*/gm, '')\n    .replace(/^正文[:：]\\s*/gm, '')\n    .replace(/^内容[:：]\\s*/gm, '')\n    .replace(/^文案[:：]\\s*/gm, '')\n    .replace(/^Call to Action[:：]\\s*/gmi, '')\n    .replace(/^行动号召[:：]\\s*/gm, '')\n    .replace(/^\\[.*?\\]\\s*/gm, '')\n    .replace(/<think>[\\s\\S]*?<\\/think>/gi, '')\n    .replace(/##/g, '#');\n  \n  const lines = formatted.split('\\n');\n  const processedLines = [];\n  const hashtags = [];\n  \n  for (let i = 0; i < lines.length; i++) {\n    const line = lines[i].trim();\n    if (!line) continue;\n    \n    // 处理双##标签的行\n    if (line.match(/^##[\\w\\s#]+$/)) {\n      const cleanLine = line.replace(/##/g, '#');\n      hashtags.push(cleanLine);\n    } else if (line.match(/^#[\\w\\s#]+$/)) {\n      hashtags.push(line);\n    } else if (line.includes('#') && line.split('#').length > 2) {\n      const parts = line.split(/(?=#)/);\n      const textPart = parts[0].trim();\n      const hashtagPart = parts.slice(1).map(h => {\n        let tag = h.trim();\n        // 清理双#标签\n        if (tag.startsWith('#')) {\n          tag = tag.replace(/^#+/, '#');\n        } else {\n          tag = '#' + tag;\n        }\n        return tag;\n      }).join(' ');\n      \n      if (textPart) processedLines.push(textPart);\n      if (hashtagPart) hashtags.push(hashtagPart);\n    } else {\n      processedLines.push(line);\n    }\n  }\n  \n  let result = processedLines.join('\\n\\n');\n  \n  if (hashtags.length > 0) {\n    // 再次清理hashtags中的双#标签\n    const cleanHashtags = hashtags.map(tag => tag.replace(/#+/g, '#')).join(' ');\n    result += '\\n\\n' + cleanHashtags;\n  }\n  \n  return result.trim();\n}\n\nconst formattedPost = formatSocialPost(raw);\n\nreturn [{ json: { \n  post: formattedPost, \n  rawPost: raw,\n  model: $json.model || '', \n  provider: 'Ollama', \n  debug: 'Successfully parsed and formatted post' \n} }];"
+        "functionCode": "let raw = $json.response || '';\nif (!raw || raw.trim() === '') {\n  return [{ json: { post: 'Error: No content generated from Ollama. Check model and prompt.', model: $json.model || '', provider: 'Ollama', debug: 'Empty response from Ollama', requestData: JSON.stringify($input) } }];\n}\n\nraw = raw.replace(/^```\\w*\\s*\\n/, '').replace(/\\n\\s*```$/, '').trim();\n\nif (raw.startsWith('\"') && raw.endsWith('\"')) {\n  raw = raw.slice(1, -1);\n}\n\nraw = raw.replace(/<think>[\\s\\S]*?<\\/think>/gi, '').trim();\n\nfunction formatSocialPost(content) {\n  let formatted = content\n    .replace(/^标题[:：]\\s*/gm, 'Title: ')\n    .replace(/^钩子[:：]\\s*/gm, 'Hook: ')\n    .replace(/^CTA[:：]\\s*/gm, 'CTA: ')\n    .replace(/^正文[:：]\\s*/gm, 'Body: ')\n    .replace(/^内容[:：]\\s*/gm, 'Content: ')\n    .replace(/^文案[:：]\\s*/gm, 'Copy: ')\n    .replace(/^Call to Action[:：]\\s*/gmi, 'Call to Action: ')\n    .replace(/^行动号召[:：]\\s*/gm, 'Action Call: ')\n    .replace(/^\\[.*?\\]\\s*/gm, '')\n    .replace(/<think>[\\s\\S]*?<\\/think>/gi, '')\n    .replace(/##/g, '#');\n  \n  const lines = formatted.split('\\n');\n  const processedLines = [];\n  const allHashtags = [];\n  \n  for (let i = 0; i < lines.length; i++) {\n    const line = lines[i].trim();\n    if (!line) continue;\n    \n    // Handle double ## tag lines\n    if (line.match(/^##[\\w\\s#]+$/)) {\n      const cleanLine = line.replace(/##/g, '#');\n      allHashtags.push(cleanLine);\n    } else if (line.match(/^#[\\w\\s#]+$/)) {\n      allHashtags.push(line);\n    } else if (line.includes('#') && line.split('#').length > 2) {\n      const parts = line.split(/(?=#)/);\n      const textPart = parts[0].trim();\n      const hashtagPart = parts.slice(1).map(h => {\n        let tag = h.trim();\n        // Clean double # tags\n        if (tag.startsWith('#')) {\n          tag = tag.replace(/^#+/, '#');\n        } else {\n          tag = '#' + tag;\n        }\n        return tag;\n      }).join(' ');\n      \n      if (textPart) processedLines.push(textPart);\n      if (hashtagPart) allHashtags.push(hashtagPart);\n    } else {\n      processedLines.push(line);\n    }\n  }\n  \n  let result = processedLines.join('\\n');\n  \n  if (allHashtags.length > 0) {\n    // Clean double # tags in hashtags and merge all hashtags into one line\n    const cleanHashtags = allHashtags.map(tag => tag.replace(/#+/g, '#').trim()).filter(tag => tag.length > 0).join(' ');\n    // Only add separator when there is content to avoid empty lines\n    if (result.trim()) {\n      result += '\\n' + cleanHashtags;\n    } else {\n      result = cleanHashtags;\n    }\n  }\n  \n  return result.trim();\n}\n\nconst formattedPost = formatSocialPost(raw);\n\nreturn [{ json: { \n  post: formattedPost, \n  rawPost: raw,\n  model: $json.model || '', \n  provider: 'Ollama', \n  debug: 'Successfully parsed and formatted post' \n} }];"
       },
       "name": "13a-Parse Ollama Post",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -2080,
-        -420
+        -320,
+        -416
       ],
-      "id": "18567352-b25a-49f8-98f4-cd05de346c71"
+      "id": "6d5537f0-977e-4d55-80ce-718c30e9dadf"
     },
     {
       "parameters": {
-        "functionCode": "const mockPost = `🚀 AI技术重塑工作新模式\n\n从自动化日常任务到智能决策支持，人工智能正在革命性地改变着我们的工作方式。传统的工作模式正在被颠覆，效率与创新并行发展。\n\n现代企业越来越依赖AI工具来提升竞争力，从数据分析到客户服务，AI的应用场景不断扩展。这不仅仅是技术的进步，更是思维方式的转变。\n\n你是否已经在工作中使用AI工具了？分享你的AI使用经验，让我们一起探索更多可能性！\n\n#AI #人工智能 #automation #科技 #未来 #工作模式`;\n\nreturn [{ json: { provider: 'OpenAI', post: mockPost, debug: 'Mock OpenAI response with proper formatting' } }];"
+        "functionCode": "const mockPost = `🚀 AI Technology Reshaping Work Models\n\nFrom automating daily tasks to intelligent decision support, artificial intelligence is revolutionizing how we work. Traditional work patterns are being disrupted, with efficiency and innovation developing in parallel.\n\nModern enterprises increasingly rely on AI tools to enhance competitiveness, from data analysis to customer service, AI application scenarios continue to expand. This is not just technological progress, but a transformation in thinking.\n\nHave you already used AI tools in your work? Share your AI experience and let's explore more possibilities together!\n\n#AI #ArtificialIntelligence #Automation #Technology #Future #WorkMode`;\n\nreturn [{ json: { provider: 'OpenAI', post: mockPost, debug: 'Mock OpenAI response with proper formatting' } }];"
       },
       "name": "14-OpenAI Generate Post",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -2180,
-        -180
+        -416,
+        -176
       ],
-      "id": "e84f696a-d5bd-464e-9f4a-4bd4dd8ac16c",
+      "id": "046e409b-d6d1-4e32-bb52-57f824994912",
       "nodeNumber": 14
     },
     {
       "parameters": {
-        "functionCode": "const mockPost = `💡 探索AI的无限可能性\n\n深度学习和机器学习正在重塑各个行业的未来。从医疗诊断的精准识别到金融分析的智能预测，再到创意设计的无限灵感，AI技术正在展现其强大的变革力量。\n\n这场技术革命不仅改变了我们的工作方式，更重新定义了人类与机器的协作关系。我们正站在一个崭新时代的门槛上，见证着智能技术如何重塑世界。\n\n你认为AI接下来会在哪个领域带来突破性进展？欢迎在评论区分享你的见解和预测！\n\n#DeepLearning #MachineLearning #AI创新 #科技前沿 #未来趋势`;\n\nreturn [{ json: { provider: 'Deepseek', post: mockPost, debug: 'Mock Deepseek response with proper formatting' } }];"
+        "functionCode": "const mockPost = `💡 Exploring AI's Infinite Possibilities\n\nDeep learning and machine learning are reshaping the future of various industries. From precise medical diagnosis to intelligent financial analysis predictions, to unlimited creative design inspiration, AI technology is demonstrating its powerful transformative force.\n\nThis technological revolution not only changes how we work, but also redefines the collaborative relationship between humans and machines. We stand at the threshold of a new era, witnessing how intelligent technology reshapes the world.\n\nWhich field do you think AI will bring breakthrough progress to next? Welcome to share your insights and predictions in the comments!\n\n#DeepLearning #MachineLearning #AIInnovation #TechFrontier #FutureTrends`;\n\nreturn [{ json: { provider: 'Deepseek', post: mockPost, debug: 'Mock Deepseek response with proper formatting' } }];"
       },
       "name": "15-Deepseek Generate Post",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -2100,
-        40
+        -336,
+        48
       ],
-      "id": "45f49a42-003d-4b6f-8741-b88eca7279ee",
+      "id": "98cde6bd-bb5c-438d-b605-19599e379b54",
       "nodeNumber": 15
     },
     {
@@ -357,10 +347,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        -1980,
-        -220
+        -224,
+        -208
       ],
-      "id": "cb0561a4-68f6-43cc-8aba-448fc4c0dac8",
+      "id": "78e85d37-b9c6-4b4a-be54-41f4dbe4a2f1",
       "nodeNumber": 16
     },
     {
@@ -371,10 +361,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        -1860,
+        -96,
         -480
       ],
-      "id": "7e8e842b-f443-4b75-b9d6-5c23e29f5631"
+      "id": "b5b1e2f3-b0ae-419a-9ea7-27c0b7cdaaf6"
     },
     {
       "parameters": {
@@ -384,10 +374,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
       "position": [
-        -1780,
-        -60
+        -16,
+        -48
       ],
-      "id": "a4cc972c-a37a-43ef-85ed-13d7a462ca18",
+      "id": "98519742-5fe8-4103-88ff-175f7d793995",
       "nodeNumber": 19
     },
     {
@@ -401,13 +391,13 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -1280,
-        -660
+        480,
+        -656
       ],
-      "id": "e85d456d-e274-47e3-98ce-aca2f74a8d96",
+      "id": "f815d51d-b291-416b-92f8-b61bd0df3b6f",
       "credentials": {
         "linkedInOAuth2Api": {
-          "id": "wN1xbWH4H4JVnxUL",
+          "id": "XcGpu0HUIYvAkc81",
           "name": "LinkedIn account"
         }
       }
@@ -428,10 +418,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        -1060,
-        -660
+        704,
+        -656
       ],
-      "id": "b26036dd-6d07-4a1f-9ea9-8a0aebfe220d"
+      "id": "060859e4-167b-4a45-85dc-c96e26b59003"
     },
     {
       "parameters": {
@@ -449,10 +439,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        -1480,
+        272,
         -400
       ],
-      "id": "fa7529ae-6c66-433e-bee6-2c9cc83e6c23"
+      "id": "4878a115-4577-42e1-952c-4c3f7b016d70"
     },
     {
       "parameters": {
@@ -462,10 +452,10 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -980,
-        -500
+        784,
+        -496
       ],
-      "id": "e9ca84d2-fbe1-4774-8a2f-7b9a2cee9a4f"
+      "id": "ddf803d6-f782-46ee-a900-463e9cf31908"
     },
     {
       "parameters": {
@@ -481,14 +471,14 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -820,
-        -660
+        944,
+        -656
       ],
-      "id": "db42c1b5-741f-4c6b-8ffd-3113ff08fb3d",
+      "id": "b6fc0900-5ff0-4a56-9059-6be040527811",
       "nodeNumber": 21,
       "credentials": {
         "linkedInOAuth2Api": {
-          "id": "wN1xbWH4H4JVnxUL",
+          "id": "XcGpu0HUIYvAkc81",
           "name": "LinkedIn account"
         }
       }
@@ -504,10 +494,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -1100,
+        656,
         -320
       ],
-      "id": "fb53fe29-72f0-441b-a5b4-a2139b473dcf",
+      "id": "fb312986-f168-46ae-bd41-c3a3e62abe74",
       "credentials": {
         "facebookGraphApi": {
           "id": "Ql9rjIM3ehMvUHNY",
@@ -551,10 +541,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        -940,
+        816,
         -320
       ],
-      "id": "f5496442-56e8-41b4-8a9f-4136e5d8928f"
+      "id": "4cd7cbe6-f7bb-49c3-a8ee-5daf16021d04"
     },
     {
       "parameters": {
@@ -572,10 +562,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        -1380,
-        -220
+        384,
+        -208
       ],
-      "id": "505d7667-9c37-4ea0-9ed9-71cfc1d1e276"
+      "id": "7b15004b-cf5e-4686-a11a-a760437e335d"
     },
     {
       "parameters": {
@@ -585,10 +575,10 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -800,
-        -200
+        960,
+        -192
       ],
-      "id": "3709d80e-dbb0-4a2d-9487-e853c7237d09"
+      "id": "ba859d51-4498-4e61-84ee-978c3ca88346"
     },
     {
       "parameters": {
@@ -602,10 +592,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -680,
-        -360
+        1072,
+        -352
       ],
-      "id": "e54efdce-7fc2-4cf0-ab18-e197b27a7be5",
+      "id": "6bda25fb-7d9b-4426-8924-1fb24e53acf8",
       "nodeNumber": 22,
       "credentials": {
         "facebookGraphApi": {
@@ -625,10 +615,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -1120,
-        -40
+        640,
+        -32
       ],
-      "id": "7d82730a-606c-48c0-8050-8720315ee3bd",
+      "id": "0680b360-92a6-4722-b22c-6ea27896885a",
       "credentials": {
         "facebookGraphApi": {
           "id": "Ql9rjIM3ehMvUHNY",
@@ -644,10 +634,10 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -980,
-        -40
+        784,
+        -32
       ],
-      "id": "008fd1aa-fe64-4ece-9f0c-22b0f33fba7a"
+      "id": "52f47e1c-7ea7-4541-a7cd-5cc7fa7c2a8e"
     },
     {
       "parameters": {
@@ -665,10 +655,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        -1260,
-        100
+        496,
+        112
       ],
-      "id": "615c295b-1631-403c-a87a-7c2253b51edf"
+      "id": "c832df51-f007-4049-bbee-79a1990f4169"
     },
     {
       "parameters": {
@@ -682,10 +672,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -800,
-        -40
+        960,
+        -32
       ],
-      "id": "d379d9c9-02b7-47bc-bd95-6a9e9d04d524",
+      "id": "2b8a7c79-9b27-4d9d-9718-801a18fd37c6",
       "credentials": {
         "facebookGraphApi": {
           "id": "Ql9rjIM3ehMvUHNY",
@@ -705,10 +695,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -660,
-        -40
+        1104,
+        -32
       ],
-      "id": "5186d383-4950-4c1f-a8ca-18493bb86bfc",
+      "id": "79e48dc9-4f2b-41ac-b356-13e91948d0ac",
       "credentials": {
         "facebookGraphApi": {
           "id": "Ql9rjIM3ehMvUHNY",
@@ -724,10 +714,10 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -900,
-        160
+        864,
+        176
       ],
-      "id": "ea4cf2a6-cee0-4510-86ad-2cffe787b9d2"
+      "id": "170dfbe0-70f7-41ee-869e-e7ac2108c9a7"
     },
     {
       "parameters": {
@@ -745,10 +735,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        -1140,
-        380
+        624,
+        400
       ],
-      "id": "91e8f516-1fb3-4eda-be5d-84fcfc1dc38f"
+      "id": "df29928c-6e81-4ea7-aecf-ee45795d5196"
     },
     {
       "parameters": {
@@ -764,10 +754,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 2,
       "position": [
-        -860,
-        320
+        896,
+        336
       ],
-      "id": "aeb57a54-2df4-464e-a3c3-592433a6a16f",
+      "id": "ebd723f1-8ac7-4e08-bea9-a24c3fb0f48a",
       "nodeNumber": 24,
       "credentials": {
         "twitterOAuth1Api": {
@@ -784,10 +774,10 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -840,
-        500
+        912,
+        512
       ],
-      "id": "4d1cc1d1-3508-4819-a4e6-ed344b547268"
+      "id": "9c53d6e1-d4cb-4346-8218-33f965d10dc5"
     },
     {
       "parameters": {
@@ -797,10 +787,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 1,
       "position": [
-        -160,
+        1600,
         -240
       ],
-      "id": "b3d586c9-9e9d-4e77-9bd2-9d6e71b17c36",
+      "id": "4feaf729-a080-489c-8e6b-6f2baadbf424",
       "nodeNumber": 25
     },
     {
@@ -811,10 +801,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        -20,
+        1744,
         -240
       ],
-      "id": "b42eb1af-8a65-4182-8f6c-4970dff6bea2",
+      "id": "c80e9ecb-877a-4238-a740-904d921cfcce",
       "nodeNumber": 26
     },
     {
@@ -825,10 +815,10 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -1600,
-        -60
+        160,
+        -48
       ],
-      "id": "8e147ee1-ff53-408f-98af-d8eb0b2af2b5",
+      "id": "84d80b0e-6524-498e-8e9a-5b66e9edf773",
       "nodeNumber": 20
     },
     {
@@ -844,10 +834,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        -1680,
-        -420
+        80,
+        -416
       ],
-      "id": "b6b30d07-ca90-4d60-b4af-c8ec1f4a8e94",
+      "id": "adc2eb23-87c2-4280-a9df-8f676822bf94",
       "nodeNumber": 18,
       "webhookId": "ef897c96-4502-4c3f-ab63-1833cfef5253"
     },
@@ -859,10 +849,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        160,
-        -60
+        1920,
+        -48
       ],
-      "id": "1f14672c-b3e9-4b89-a5db-a3444c53c68e"
+      "id": "f2d1ca90-8ffa-491d-996b-c246d56bd3ec"
     },
     {
       "parameters": {
@@ -871,13 +861,13 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "b28abf11-a153-4abb-924f-6d663a2597ae",
+      "id": "02586d81-56e8-4ef3-a48f-fc5d7330bed5",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        -4060,
-        460
+        -2304,
+        480
       ],
       "webhookId": "instagram-webhook"
     },
@@ -913,13 +903,13 @@
         },
         "options": {}
       },
-      "id": "a21663c3-c5b1-4392-b159-c0334d491fcd",
+      "id": "10c43f22-2d84-4131-88d3-3915204bd654",
       "name": "Verification Check",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -3840,
-        460
+        -2080,
+        480
       ]
     },
     {
@@ -928,13 +918,13 @@
         "responseBody": "={{ $json.query['hub.challenge'] }}",
         "options": {}
       },
-      "id": "3fa26001-571e-44bf-8fdb-2cfe8fd0400c",
+      "id": "45612c93-6d6c-4bf2-b711-7f2de704cdc2",
       "name": "Return Challenge",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        -3620,
-        360
+        -1856,
+        368
       ]
     },
     {
@@ -945,13 +935,13 @@
           "responseCode": 403
         }
       },
-      "id": "562759f1-430c-47ea-a40d-0ebb0da7864c",
+      "id": "a4f571bd-fd01-41d8-876b-bff967588c13",
       "name": "Return Error",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        -3620,
-        560
+        -1856,
+        576
       ]
     },
     {
@@ -962,10 +952,10 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -3840,
-        -120
+        -2080,
+        -112
       ],
-      "id": "6005fa15-33b4-4644-bbf7-a30f020291ef"
+      "id": "4b23eba9-b3a2-49a1-9578-2bd8459ab02e"
     },
     {
       "parameters": {
@@ -975,10 +965,10 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        -3840,
-        80
+        -2080,
+        96
       ],
-      "id": "e536e355-b184-409d-a8fa-9ac613480c78"
+      "id": "410fd5cf-3096-4319-85bb-e04a568a16af"
     }
   ],
   "pinData": {},
@@ -1191,8 +1181,7 @@
             "type": "main",
             "index": 0
           }
-        ],
-        []
+        ]
       ]
     },
     "14-OpenAI Generate Post": {
@@ -1631,10 +1620,10 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "78bf06d8-c548-4c88-b4ac-00b3e0f02acd",
+  "versionId": "2f46e05b-2f31-4bc5-8ba1-dd29f8df9f03",
   "meta": {
     "instanceId": "5bd350cdf438b8337e86b6a07c0089dc12a2465558e0e77f5da8f5f877bf6079"
   },
-  "id": "HPO2AffNABy0QyNz",
+  "id": "fO6IQjH3a8xUYjED",
   "tags": []
 }

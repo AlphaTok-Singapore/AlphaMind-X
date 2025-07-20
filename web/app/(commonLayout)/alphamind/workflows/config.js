@@ -44,4 +44,4 @@ export const defaultPostPrompt = `请根据以下主题和关键词，写一篇�
 
 [第三段内容 - 互动呼吁]
 
-[hashtags]`
+[所有hashtags在同一行，用空格分隔]`

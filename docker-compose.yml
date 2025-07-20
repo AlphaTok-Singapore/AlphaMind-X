@@ -87,6 +87,10 @@ services:
       # Plugin Daemon Configuration
       PLUGIN_DAEMON_URL: http://plugin_daemon:5002
       PLUGIN_DAEMON_KEY: lYkiYYT6owG+71oLerGzA7GXCgOT++6ovaezWAjpCjf+Sjc3ZtU+qUEi
+
+      # Session Timeout Configuration (24 hours)
+      ACCESS_TOKEN_EXPIRE_MINUTES: 1440
+      REFRESH_TOKEN_EXPIRE_DAYS: 30
     depends_on:
       db:
         condition: service_healthy
@@ -137,7 +141,7 @@ services:
       NEXT_PUBLIC_PUBLIC_API_PREFIX: http://localhost:3000/api
       NEXT_PUBLIC_MARKETPLACE_API_PREFIX: https://marketplace.dify.ai/api/v1
       NEXT_PUBLIC_MARKETPLACE_URL_PREFIX: https://marketplace.dify.ai
-      NEXT_PUBLIC_N8N_URL: http://n8n:5678
+      NEXT_PUBLIC_N8N_URL: http://localhost:5678
       NEXT_PUBLIC_DEPLOY_ENV: DEVELOPMENT
       NEXT_PUBLIC_EDITION: SELF_HOSTED
       NEXT_TELEMETRY_DISABLED: 1
@@ -239,6 +243,9 @@ services:
 
       # Debug log level
       # - N8N_LOG_LEVEL=debug
+
+      # Enable task runners (recommended)
+      - N8N_RUNNERS_ENABLED=true
 
       # Database configuration (optional, if PostgreSQL is needed)
       # - DB_TYPE=postgresdb

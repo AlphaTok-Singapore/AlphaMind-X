@@ -13,9 +13,25 @@ const nextConfig = {
     // 解决 Windows 路径大小写问题
     if (dev && !isServer) {
       config.watchOptions = {
-        ignored: /node_modules/,
-        aggregateTimeout: 300,
-        poll: 1000,
+        ignored: [
+          /node_modules/,
+          /\.git/,
+          /\.next/,
+          /temp/,
+          /docs/,
+          /docker/,
+          /scripts/,
+          /tests/,
+          /sdks/,
+          /images/,
+          /backup\.sql/,
+          /\.env/,
+          /\.md$/,
+          /\.txt$/,
+          /\.log$/,
+        ],
+        aggregateTimeout: 500,
+        poll: 2000,
       }
       config.resolve.symlinks = false
     }
@@ -27,6 +43,8 @@ const nextConfig = {
     turbo: {
       rules: {},
     },
+    // 优化 Fast Refresh
+    fastRefresh: true,
   },
   async rewrites() {
     return [

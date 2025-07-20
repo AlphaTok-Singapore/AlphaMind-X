@@ -176,7 +176,9 @@ reset_database() {
 
     # 启动所有服务
     print_info "启动所有服务..."
-    docker-compose up -d --build
+    docker-compose up -d --build || {
+        print_warning "docker-compose up 失败，但继续执行后续步骤..."
+    }
 
     # 等待服务启动
     print_info "等待服务启动..."
@@ -193,13 +195,15 @@ reset_database() {
     if [ -f "fix_schema.sh" ]; then
         print_info "运行 schema 修复脚本..."
         bash fix_schema.sh
+    else
+        print_warning "未找到 fix_schema.sh 脚本，跳过 schema 修复"
     fi
 
     # 验证重置结果
     print_info "验证重置结果..."
-    local account_count=$(docker exec alphamind-db-1 psql -U dify -d dify -t -c "SELECT COUNT(*) FROM accounts;" 2>/dev/null | tr -d ' \n' || echo "0")
-    local tenant_count=$(docker exec alphamind-db-1 psql -U dify -d dify -t -c "SELECT COUNT(*) FROM tenants;" 2>/dev/null | tr -d ' \n' || echo "0")
-    local setup_count=$(docker exec alphamind-db-1 psql -U dify -d dify -t -c "SELECT COUNT(*) FROM dify_setups;" 2>/dev/null | tr -d ' \n' || echo "0")
+    local account_count=$(docker exec "$db_container" psql -U "$postgres_user" -d dify -t -c "SELECT COUNT(*) FROM accounts;" 2>/dev/null | tr -d ' \n' || echo "0")
+    local tenant_count=$(docker exec "$db_container" psql -U "$postgres_user" -d dify -t -c "SELECT COUNT(*) FROM tenants;" 2>/dev/null | tr -d ' \n' || echo "0")
+    local setup_count=$(docker exec "$db_container" psql -U "$postgres_user" -d dify -t -c "SELECT COUNT(*) FROM dify_setups;" 2>/dev/null | tr -d ' \n' || echo "0")
 
     echo "账户数量: $account_count"
     echo "租户数量: $tenant_count"

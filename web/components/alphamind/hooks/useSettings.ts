@@ -117,7 +117,7 @@ const defaultSettings: AllSettings = {
   },
   security: {
     twoFactorAuth: false,
-    sessionTimeout: 3600,
+    sessionTimeout: 86400,
     ipWhitelist: [],
     apiRateLimit: 100,
   },
@@ -133,11 +133,6 @@ export function useSettings(options: UseSettingsOptions = {}): UseSettingsReturn
   const [settings, setSettings] = useState<AllSettings>(defaultSettings)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  // Load initial settings
-  useEffect(() => {
-    refreshSettings()
-  }, [])
 
   const handleError = useCallback((err: unknown) => {
     const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
@@ -168,6 +163,11 @@ export function useSettings(options: UseSettingsOptions = {}): UseSettingsReturn
       setIsLoading(false)
     }
   }, [apiUrl, handleError, onSettingsChanged])
+
+  // Load initial settings
+  useEffect(() => {
+    refreshSettings()
+  }, [refreshSettings])
 
   const updateSettings = useCallback(async (
     section: keyof AllSettings,

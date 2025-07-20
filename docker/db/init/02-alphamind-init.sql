@@ -2,10 +2,12 @@
 -- 创建 AlphaMind 相关的数据库表和 n8n 数据库
 
 -- 创建 n8n 数据库 (幂等化)
-CREATE DATABASE IF NOT EXISTS n8n;
+SELECT 'CREATE DATABASE n8n'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'n8n')\gexec
 
 -- 创建 dify_plugin 数据库 (幂等化)
-CREATE DATABASE IF NOT EXISTS dify_plugin;
+SELECT 'CREATE DATABASE dify_plugin'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'dify_plugin')\gexec
 \connect dify_plugin
 -- 可选：如有 plugin_daemon 需要的表，可在此处补充
 
