@@ -43,7 +43,19 @@ export default function CheckCode() {
       if (ret.result === 'success') {
         localStorage.setItem('console_token', ret.data.access_token)
         localStorage.setItem('refresh_token', ret.data.refresh_token)
-        router.replace(invite_token ? `/signin/invite-settings?${searchParams.toString()}` : '/apps')
+        // 检查是否有重定向参数
+        const redirectUrl = searchParams.get('redirect')
+        if (redirectUrl) {
+          router.replace(redirectUrl)
+        }
+        else {
+          router.replace(invite_token ? `/signin/invite-settings?${searchParams.toString()}` : (() => {
+            // 检查是否从 AlphaMind 页面登录
+            const referrer = document.referrer
+            const isFromAlphaMind = referrer.includes('/alphamind') || referrer.includes('localhost:3000/alphamind')
+            return isFromAlphaMind ? '/' : '/apps'
+          })())
+        }
       }
     }
     catch (error) { console.error(error) }

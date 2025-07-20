@@ -53,7 +53,7 @@ export default function MailAndCodeAuth() {
   }
 
   return (<form onSubmit={noop}>
-    <input type='text' className='hidden' />
+    <input type='text' className='hidden' aria-hidden="true" />
     <div className='mb-2'>
       <label htmlFor="email" className='system-md-semibold my-2 text-text-secondary'>{t('login.email')}</label>
       <div className='mt-1'>

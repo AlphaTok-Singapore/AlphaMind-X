@@ -256,4 +256,5 @@ api/fix_logging.py
 
 node_modules/
 
-*.sh
+# Ignore .sh files in root directory only
+./*.sh

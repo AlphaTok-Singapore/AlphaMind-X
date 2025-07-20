@@ -12,7 +12,7 @@ SET standard_conforming_strings = on;
 --
 
 CREATE ROLE dify;
-ALTER ROLE dify WITH SUPERUSER INHERIT CREATEROLE CREATEDB LOGIN REPLICATION BYPASSRLS PASSWORD 'SCRAM-SHA-256$4096:1HoRUeNnqqQX8BCkWv2/PA==$3OnbOQYRj6pct2ZL1e6Wgle69EC6W5lzHnY3+PS/ELw=:fnZJGhOgzhIAiAxR7LBOhzirzlZauZGj7SuZRUJ+IRg=';
+ALTER ROLE dify WITH SUPERUSER INHERIT CREATEROLE CREATEDB LOGIN REPLICATION BYPASSRLS PASSWORD 'SCRAM-SHA-256$4096:MuiYGWwiT6mlKR+vdkWLgg==$GehgiehsD7waCiG4E31u1C4YjohI2lfp4FvIYeMmqyU=:3dNIooED+Nf+qu1FZZzuY1YpJNvn+oMrdoCubxBaSC4=';
 
 --
 -- User Configurations
@@ -387,25 +387,11 @@ CREATE TABLE public.celery_taskmeta (
 ALTER TABLE public.celery_taskmeta OWNER TO dify;
 
 --
--- Name: taskset_id_sequence; Type: SEQUENCE; Schema: public; Owner: dify
---
-
-CREATE SEQUENCE public.taskset_id_sequence
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.taskset_id_sequence OWNER TO dify;
-
---
 -- Name: celery_tasksetmeta; Type: TABLE; Schema: public; Owner: dify
 --
 
 CREATE TABLE public.celery_tasksetmeta (
-    id integer DEFAULT nextval('public.taskset_id_sequence'::regclass) NOT NULL,
+    id integer NOT NULL,
     taskset_id character varying(155),
     result bytea,
     date_done timestamp without time zone
@@ -1362,6 +1348,20 @@ CREATE TABLE public.tags (
 ALTER TABLE public.tags OWNER TO dify;
 
 --
+-- Name: taskset_id_sequence; Type: SEQUENCE; Schema: public; Owner: dify
+--
+
+CREATE SEQUENCE public.taskset_id_sequence
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.taskset_id_sequence OWNER TO dify;
+
+--
 -- Name: tenant_account_joins; Type: TABLE; Schema: public; Owner: dify
 --
 
@@ -1839,7 +1839,7 @@ COPY public.account_plugin_permissions (id, tenant_id, install_permission, debug
 --
 
 COPY public.accounts (id, name, email, password, password_salt, avatar, interface_language, interface_theme, timezone, last_login_at, last_login_ip, status, initialized_at, created_at, updated_at, last_active_at) FROM stdin;
-98046cd1-bbb2-46ec-920c-c0dc16522d16	Test User	test@example.com	test123456			en-US	light	UTC	\N	\N	active	\N	2025-07-19 15:31:14.370019	2025-07-19 15:31:14.370019	2025-07-19 15:31:14
+3cdaf7be-e0cb-4998-a1ea-279454a9d167	Feng Shaomin	smfeng7319@gmail.com	MWQ4MDg1Zjc5MmNiNjc1YTNjMzMwNDE0MThiMDU5ODQ1MzRkYjZkZWJhNzM5NDExNTc5Mzg2YjU1NjhiYjIwMg==	DTZeGqjGngLQAr24XgCr7A==	\N	en-US	light	America/New_York	2025-07-20 03:54:52.069409	172.20.0.1	active	2025-07-20 03:54:36.630424	2025-07-20 03:54:37	2025-07-20 03:54:37	2025-07-20 03:54:37
 \.
 
 
@@ -2049,6 +2049,7 @@ COPY public.datasets (id, tenant_id, name, description, provider, permission, da
 --
 
 COPY public.dify_setups (version, setup_at) FROM stdin;
+1.5.0	2025-07-20 03:54:37
 \.
 
 
@@ -2281,7 +2282,7 @@ COPY public.tags (id, tenant_id, type, name, created_by, created_at) FROM stdin;
 --
 
 COPY public.tenant_account_joins (id, tenant_id, account_id, role, invited_by, created_at, updated_at, current) FROM stdin;
-0047cc22-4e47-4e55-b961-b289c06e7473	b1c94070-fbb6-46fe-8e8e-b1ef992683b2	98046cd1-bbb2-46ec-920c-c0dc16522d16	owner	\N	2025-07-19 15:32:20.714567	2025-07-19 15:32:20.714567	t
+61f47df9-bb5a-48e1-92f3-e3205828bae5	533682eb-fdf1-4c7e-a56f-c3eb844f6d1f	3cdaf7be-e0cb-4998-a1ea-279454a9d167	owner	\N	2025-07-20 03:54:37	2025-07-20 03:54:37	t
 \.
 
 
@@ -2306,7 +2307,7 @@ COPY public.tenant_preferred_model_providers (id, tenant_id, provider_name, pref
 --
 
 COPY public.tenants (id, status, created_at, updated_at, custom_config, name, encrypt_public_key, plan) FROM stdin;
-b1c94070-fbb6-46fe-8e8e-b1ef992683b2	active	2025-07-19 15:31:42.084316	2025-07-19 15:31:42.084316	\N	Default Tenant	\N	basic
+533682eb-fdf1-4c7e-a56f-c3eb844f6d1f	normal	2025-07-20 03:54:37	2025-07-20 03:54:37	\N	Feng Shaomin's Workspace	-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4GPTdAoq+pr0A55bjoAC\n08T32qNHP6xK0fyHSLcWEfg6ajI3vLTocJcsm00NuT5xhF2uCFfoL9/l6rbNpADN\nQ1D7TP4/tNr9jYjhszMKMDSMM1q/8x92eS/1S4hawJzGe9HaGwhFIQ0bL9RQfCrM\nZ9kKtXYbDwZwhDa5GF9FQEuNkZB8UZq+lSOfQluCJYmYiYJ9hXXpLMPFvYMVBfLO\nhkWyOh1ots/kWjIqhqPGIqVl9nfK+fkldVPj/vRYia3yvjiGpY4YFaxfks3aibm0\nH7u8aSnCH2zH9X95ba1+UUytg6FAo44Y5PSMlklnT1+TAtLXztPwFVceSCyaqRmr\nLQIDAQAB\n-----END PUBLIC KEY-----	basic
 \.
 
 

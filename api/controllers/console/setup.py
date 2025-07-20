@@ -52,7 +52,13 @@ class SetupApi(Resource):
 
 def get_setup_status():
     if dify_config.EDITION == "SELF_HOSTED":
-        return db.session.query(DifySetup).first()
+        try:
+            return db.session.query(DifySetup).first()
+        except Exception as e:
+            # 捕获表不存在等异常，返回 None
+            if 'UndefinedTable' in str(e) or 'does not exist' in str(e):
+                return None
+            raise
     else:
         return True
 

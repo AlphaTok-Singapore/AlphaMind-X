@@ -74,7 +74,23 @@ export default function MailAndPasswordAuth({ isInvite, isEmailSetup, allowRegis
         else {
           localStorage.setItem('console_token', res.data.access_token)
           localStorage.setItem('refresh_token', res.data.refresh_token)
-          router.replace('/apps')
+
+          // 检查是否有重定向参数
+          const redirectUrl = searchParams.get('redirect')
+          console.log('Login success - redirectUrl:', redirectUrl)
+          console.log('Login success - searchParams:', searchParams.toString())
+          if (redirectUrl) {
+            console.log('Redirecting to:', redirectUrl)
+            router.replace(redirectUrl)
+          }
+          else {
+            // 检查是否从 AlphaMind 页面登录
+            const referrer = document.referrer
+            console.log('Login success - referrer:', referrer)
+            const isFromAlphaMind = referrer.includes('/alphamind') || referrer.includes('localhost:3000/alphamind')
+            console.log('Login success - isFromAlphaMind:', isFromAlphaMind)
+            router.replace(isFromAlphaMind ? '/' : '/apps')
+          }
         }
       }
       else if (res.code === 'account_not_found') {

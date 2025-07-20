@@ -5,8 +5,8 @@ import { TanstackQueryIniter } from '@/context/query-client'
 import GlobalPublicStoreProvider from '@/context/global-public-context'
 
 export const metadata: Metadata = {
-  title: 'Dify - AI Application Platform',
-  description: 'Build and operate AI applications with Dify',
+  title: 'AlphaMind - AI Application Platform',
+  description: 'Build and operate AI applications with AlphaMind',
 }
 
 export default function RootLayout({
