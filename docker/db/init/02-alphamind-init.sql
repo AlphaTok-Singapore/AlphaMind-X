@@ -33,6 +33,9 @@ CREATE INDEX IF NOT EXISTS idx_alphamind_agents_user_id ON alphamind_agents(user
 CREATE INDEX IF NOT EXISTS idx_alphamind_agents_status ON alphamind_agents(status);
 CREATE INDEX IF NOT EXISTS idx_alphamind_agents_type ON alphamind_agents(type);
 
+-- 添加唯一约束以支持 ON CONFLICT 操作
+ALTER TABLE alphamind_agents ADD CONSTRAINT IF NOT EXISTS unique_agent_name_user_id UNIQUE (name, user_id);
+
 -- 创建 AlphaMind 对话表
 CREATE TABLE IF NOT EXISTS alphamind_conversations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -87,6 +90,9 @@ CREATE INDEX IF NOT EXISTS idx_alphamind_datasets_user_id ON alphamind_datasets(
 CREATE INDEX IF NOT EXISTS idx_alphamind_datasets_type ON alphamind_datasets(type);
 CREATE INDEX IF NOT EXISTS idx_alphamind_datasets_status ON alphamind_datasets(status);
 
+-- 添加唯一约束以支持 ON CONFLICT 操作
+ALTER TABLE alphamind_datasets ADD CONSTRAINT IF NOT EXISTS unique_dataset_name_user_id UNIQUE (name, user_id);
+
 -- 创建 AlphaMind 工作流执行记录表
 CREATE TABLE IF NOT EXISTS alphamind_workflow_executions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -124,6 +130,9 @@ CREATE TABLE IF NOT EXISTS alphamind_mcp_tools (
 CREATE INDEX IF NOT EXISTS idx_alphamind_mcp_tools_user_id ON alphamind_mcp_tools(user_id);
 CREATE INDEX IF NOT EXISTS idx_alphamind_mcp_tools_category ON alphamind_mcp_tools(category);
 CREATE INDEX IF NOT EXISTS idx_alphamind_mcp_tools_status ON alphamind_mcp_tools(status);
+
+-- 添加唯一约束以支持 ON CONFLICT 操作
+ALTER TABLE alphamind_mcp_tools ADD CONSTRAINT IF NOT EXISTS unique_mcp_tool_name_user_id UNIQUE (name, user_id);
 
 -- 创建 AlphaMind 用户设置表
 CREATE TABLE IF NOT EXISTS alphamind_user_settings (
