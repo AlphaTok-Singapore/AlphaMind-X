@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import AlphaMindDashboardLayout from '../components/AlphaMindDashboardLayout'
 import { defaultPostPrompt, defaultSeoPrompt } from './config'
+import Select from 'react-select'
+import type { MultiValue } from 'react-select' // 需安装 @types/react-select
 
 // Webhook URLs and model options from config.js
 // TODO: 本地开发用 http，生产请改为 https 并恢复下方注释
@@ -58,8 +60,31 @@ export default function WorkflowsPage() {
   const [leftWidth, setLeftWidth] = useState(480) // 初始左栏宽度
   const dragging = useRef(false)
   const modelOptions = PROVIDER_MODEL_MAP[provider] || []
+  const [images, setImages] = useState<string[]>([])
+  const [lastPreview, setLastPreview] = useState<{
+    post: string
+    model?: string
+    provider?: string
+    debug?: string
+  } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [isResized, setIsResized] = useState(false)
+
+  // 处理图片上传
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      if (ev.target)
+        setImages(prev => [...prev, ev.target!.result as string]) // base64
+    }
+    reader.readAsDataURL(file)
+  }
 
   const platformOptions = ['LinkedIn', 'Facebook', 'Instagram', 'X']
+  const platformSelectOptions = platformOptions.map(p => ({ value: p, label: p }))
 
   // 拖动分割条事件
   useEffect(() => {
@@ -81,6 +106,19 @@ export default function WorkflowsPage() {
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseup', onMouseUp)
     }
+  }, [])
+
+  // 检测 textarea 尺寸变化（用户拖拽调整时）
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    const observer = new ResizeObserver(() => {
+      setIsResized(true)
+    })
+    observer.observe(textarea)
+
+    return () => observer.disconnect()
   }, [])
 
   // 提交表单
@@ -107,6 +145,13 @@ export default function WorkflowsPage() {
       const json = await res.json()
       setResponse(JSON.stringify(json, null, 2))
       setFinalPost(formatLLMContent(json))
+      // 新增：缓存本次预览内容
+      setLastPreview({
+        post: json.post || (json.content ? json.content : JSON.stringify(json, null, 2)),
+        model: json.model,
+        provider: json.provider,
+        debug: json.debug,
+      })
     }
  catch (err: any) {
       setResponse(`❌ Error: ${err.message}`)
@@ -117,24 +162,39 @@ export default function WorkflowsPage() {
   }
 
   // 恢复AI初始生成（用于编辑区误删或需要还原）
-  const handleLoadPreview = async () => {
+  const handleLoadPreview = () => {
     setPreviewLoading(true)
-    setPreview('⏳ Loading preview...')
-    try {
-      const res = await fetch(PREVIEW_WEBHOOK)
-      const json = await res.json()
-      setPreview(JSON.stringify(json, null, 2))
-      setFinalPost(json.post || (json.content ? json.content : JSON.stringify(json, null, 2)))
-    }
- catch (err: any) {
-      setPreview(`❌ Failed to load preview: ${err?.message || String(err)}`)
-    }
- finally {
+    setPreview('⏳ Restoring preview...')
+    setTimeout(() => {
+      if (lastPreview) {
+        setFinalPost(lastPreview.post)
+        setPreview(
+          JSON.stringify(
+            {
+              post: lastPreview.post,
+              model: lastPreview.model,
+              provider: lastPreview.provider,
+              debug: lastPreview.debug,
+            },
+            null,
+            2,
+          ),
+        )
+      }
+      else {
+        setPreview('❌ No preview available to restore.')
+      }
       setPreviewLoading(false)
-    }
+    }, 300)
   }
 
-  // 审批/发布
+  // Provider 变化时自动切换 Model
+  useEffect(() => {
+    if (modelOptions.length > 0)
+      setModel(modelOptions[0])
+  }, [provider, modelOptions])
+
+  // 修改 handleApprove，images 一起提交
   const handleApprove = async () => {
     setApproveLoading(true)
     setPreview(prev => `${prev}\n⏳ Sending approval...`)
@@ -144,7 +204,8 @@ export default function WorkflowsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           post: finalPost,
-          platforms, // 直接用当前 platforms state
+          platforms,
+          images, // 新增
         }),
       })
       const result = await res.json()
@@ -158,19 +219,13 @@ export default function WorkflowsPage() {
     }
   }
 
-  // Provider 变化时自动切换 Model
-  useEffect(() => {
-    if (modelOptions.length > 0)
-      setModel(modelOptions[0])
-  }, [provider])
-
   return (
     <AlphaMindDashboardLayout>
       <div className="relative flex min-h-[80vh] flex-col bg-[#f7f9fa] md:flex-row">
         {/* 左侧输入区 */}
         <div
-          className="left flex flex-col justify-between border-r border-[#dde3ec] bg-[#f4f7fa] p-4 md:p-6"
-          style={{ minWidth: 320, maxWidth: 900, width: leftWidth, boxSizing: 'border-box' }}
+          className="left flex flex-col justify-between border-r border-[#dde3ec] bg-[#f4f7fa] p-4 md:p-6 left-panel-custom"
+          style={{ width: leftWidth }}
         >
           <div>
             <h2 className="mb-3 text-xl font-bold text-[#1a1a1a]">Input Settings</h2>
@@ -191,11 +246,10 @@ export default function WorkflowsPage() {
                 <textarea
                   id="manual"
                   rows={4}
-                  className="left-textarea resize-both rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none"
+                  className="left-textarea mb-2 rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none resize-both"
                   placeholder="Paste article content here..."
                   value={manual}
                   onChange={e => setManual(e.target.value)}
-                  style={{ width: '100%', minWidth: 0, maxWidth: '100%' }}
                 />
               </div>
               <div>
@@ -236,7 +290,7 @@ export default function WorkflowsPage() {
                 <textarea
                   id="seoPrompt"
                   rows={4}
-                  className="resize-both w-full max-w-full rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none"
+                  className="left-textarea mb-2 rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none resize-both"
                   placeholder="SEO prompt for the post..."
                   value={seoPrompt}
                   onChange={e => setSeoPrompt(e.target.value)}
@@ -247,7 +301,7 @@ export default function WorkflowsPage() {
                 <textarea
                   id="postPrompt"
                   rows={4}
-                  className="resize-both w-full max-w-full rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none"
+                  className="left-textarea mb-2 rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none resize-both"
                   placeholder="Post prompt for the post..."
                   value={postPrompt}
                   onChange={e => setPostPrompt(e.target.value)}
@@ -255,21 +309,15 @@ export default function WorkflowsPage() {
               </div>
               <div>
                 <label htmlFor="platforms" className="mb-1 block font-medium text-[#222]">Target Platforms</label>
-                <select
-                  id="platforms"
-                  multiple
-                  className="w-full rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none"
-                  value={platforms}
-                  onChange={(e) => {
-                    const selected = Array.from(e.target.selectedOptions).map(o => o.value)
-                    setPlatforms(selected)
-                  }}
-                  title="Select target platforms"
-                >
-                  {platformOptions.map(p => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
+                <Select
+                  isMulti
+                  options={platformSelectOptions}
+                  value={platforms.map(p => ({ value: p, label: p }))}
+                  onChange={(selected: MultiValue<{ value: string; label: string }>) => setPlatforms(selected.map((opt: { value: string; label: string }) => opt.value))}
+                  className="mb-2"
+                  placeholder="Select one or more platforms"
+                  inputId="platforms"
+                />
               </div>
               <div className="action-bar mb-2 flex gap-2">
                 <button
@@ -282,7 +330,7 @@ export default function WorkflowsPage() {
               </div>
             </form>
             {/* Raw Output moved up, reduce gap */}
-            <div style={{ marginTop: '8px' }}>
+            <div className="mt-8px">
               <div className="output-label mb-1 mt-2 font-semibold text-[#222]">Raw Output</div>
               <textarea
                 readOnly
@@ -321,7 +369,7 @@ export default function WorkflowsPage() {
             height: '100%',
             boxSizing: 'border-box',
             overflow: 'auto',
-            resize: 'none',
+            // 移除 resize: 'none', 允许子元素自由resize
             scrollbarWidth: 'thin',
             scrollbarColor: '#dde3ec #f4f7fa',
           }}
@@ -329,91 +377,111 @@ export default function WorkflowsPage() {
         >
           <h2 className="mb-3 text-xl font-bold text-[#1a1a1a]">Output & Edit Area</h2>
           <label className="output-label mb-2 font-semibold text-[#222]" htmlFor="finalPost">Working Post</label>
-          <div style={{ flex: 1, minHeight: 200, display: 'flex', flexDirection: 'column' }}>
-            <textarea
-              id="finalPost"
-              className="output-textarea mb-2 rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none"
-              placeholder="Generated content will appear here. Edit or co-create..."
-              value={finalPost}
-              onChange={e => setFinalPost(e.target.value)}
-              style={{ resize: 'none', width: '100%', height: '100%', minHeight: 120, minWidth: 0, maxWidth: '100%' }}
+          <textarea
+            ref={textareaRef}
+            id="finalPost"
+            className={`mb-2 rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none working-post-textarea${isResized ? ' no-flex-grow' : ''}`}
+            placeholder="Generated content will appear here. Edit or co-create..."
+            value={finalPost}
+            onChange={e => setFinalPost(e.target.value)}
+            style={{
+              minHeight: '120px',
+              boxSizing: 'border-box',
+            }}
+          />
+          {/* 新增：图片上传与预览区 */}
+          {images.length > 0 && (
+            <div className="image-preview-list">
+              {images.map((src, idx) => (
+                <div key={idx} className="image-preview-container">
+                  <img
+                    src={src}
+                    alt={`user-img-${idx}`}
+                    className="image-preview-img"
+                  />
+                  <button
+                    onClick={() => setImages(images => images.filter((_, i) => i !== idx))}
+                    className="image-remove-btn"
+                    title="Remove image"
+                    aria-label="Remove image"
+                    type="button"
+                  >×</button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="action-bar mb-2 flex gap-2 items-center">
+            {/* Image upload icon button */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current && fileInputRef.current.click()}
+              className="img-icon-btn"
+              title="Add image"
+              aria-label="Add image"
+            >
+              {/* Camera or image SVG icon */}
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34c759" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13.5" r="3.5"/><path d="M5 7l2-3h10l2 3"/></svg>
+            </button>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              className="hidden-input"
+              onChange={handleFileChange}
+              title="Choose image file"
+              placeholder="Choose image file"
             />
-          </div>
-          <div className="action-bar mb-2 flex gap-2">
+            {/* Publish button */}
             <button
               type="button"
               className={'rounded-lg bg-[#34c759] px-5 py-2 font-medium text-white shadow-md transition hover:bg-[#28a745] disabled:bg-[#bfcfe3]'}
               onClick={handleApprove}
               disabled={approveLoading}
             >
-              Approve & Publish
+              Publish
             </button>
+            {/* Restore button */}
             <button
               type="button"
               className={'rounded-lg bg-[#377dff] px-5 py-2 font-medium text-white shadow-md transition hover:bg-[#285fd1] disabled:bg-[#bfcfe3]'}
               onClick={handleLoadPreview}
               disabled={previewLoading}
             >
-              Restore AI Output
+              Restore
             </button>
           </div>
           <div className="output-label mb-1 mt-2 font-semibold text-[#222]">Status</div>
           <pre className="status min-h-[50px] whitespace-pre-wrap break-words rounded-lg bg-[#f6f7f9] p-3 font-mono text-[15px] text-[#314365]">{preview}</pre>
-          {/* 右下角 resize 区域 */}
-          <div
-            style={{
-              position: 'absolute',
-              right: 0,
-              bottom: 0,
-              width: 18,
-              height: 18,
-              cursor: 'nwse-resize',
-              zIndex: 20,
-              background: 'transparent',
-              display: 'flex',
-              alignItems: 'flex-end',
-              justifyContent: 'flex-end',
-              pointerEvents: 'auto',
-            }}
-            title="Resize panel"
-            onMouseDown={(e) => {
-              e.preventDefault()
-              const panel = document.getElementById('right-panel')
-              if (!panel)
-                return
-
-              const startX = e.clientX
-              const startY = e.clientY
-              const startWidth = panel.offsetWidth
-              const startHeight = panel.offsetHeight
-
-              const onMove = (ev: MouseEvent) => {
-                const dx = ev.clientX - startX
-                const dy = ev.clientY - startY
-                const minWidth = 320
-                const minHeight = 300
-                const newWidth = Math.max(minWidth, startWidth + dx)
-                const newHeight = Math.max(minHeight, startHeight + dy)
-                if (panel) {
-                  panel.style.width = `${newWidth}px`
-                  panel.style.height = `${newHeight}px`
-                }
-              }
-
-              const onUp = () => {
-                window.removeEventListener('mousemove', onMove)
-                window.removeEventListener('mouseup', onUp)
-              }
-
-              window.addEventListener('mousemove', onMove)
-              window.addEventListener('mouseup', onUp)
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18"><path d="M3 15h12M6 12h9M9 9h6" stroke="#dde3ec" strokeWidth="2" strokeLinecap="round"/></svg>
-          </div>
         </div>
       </div>
       <style jsx global>{`
+        .mt-8px { margin-top: 8px; }
+        .left-panel-custom {
+          min-width: 320px;
+          max-width: 900px;
+          box-sizing: border-box;
+        }
+        .image-preview-list {
+          margin-top: 8px;
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+        .hidden-input {
+          display: none;
+        }
+        .working-post-textarea {
+          resize: both !important;
+          overflow: auto;
+          min-height: 120px;
+          flex-grow: 1;
+          max-width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+        }
+        .working-post-textarea.no-flex-grow {
+          flex-grow: 0 !important;
+        }
         .left, .right {
           box-sizing: border-box;
           overflow-y: auto;
@@ -433,11 +501,11 @@ export default function WorkflowsPage() {
         .splitter:hover {
           background: #bfcfe3;
         }
-        .output-textarea {
-          resize: none !important;
-          width: 100% !important;
-          height: 100% !important;
-          min-height: 120px;
+        .working-post-textarea::-webkit-resizer {
+          background: #dde3ec;
+          border-radius: 2px;
+          width: 16px;
+          height: 16px;
         }
         .left-textarea {
           width: 100% !important;
@@ -494,24 +562,34 @@ export default function WorkflowsPage() {
           background: #fff !important;
         }
         /* 全局滚动条样式，确保页面和右侧panel一致 */
+        html, body, #__next, .main, .right, #right-panel {
+          scrollbar-width: thin !important;
+          scrollbar-color: #dde3ec #f4f7fa !important;
+        }
         html::-webkit-scrollbar,
         body::-webkit-scrollbar,
         #root::-webkit-scrollbar,
-        .main::-webkit-scrollbar {
+        .main::-webkit-scrollbar,
+        .right::-webkit-scrollbar,
+        #right-panel::-webkit-scrollbar {
           width: 8px !important;
           background: #f4f7fa !important;
         }
         html::-webkit-scrollbar-thumb,
         body::-webkit-scrollbar-thumb,
         #root::-webkit-scrollbar-thumb,
-        .main::-webkit-scrollbar-thumb {
+        .main::-webkit-scrollbar-thumb,
+        .right::-webkit-scrollbar-thumb,
+        #right-panel::-webkit-scrollbar-thumb {
           background: #dde3ec !important;
           border-radius: 6px !important;
         }
         html::-webkit-scrollbar-thumb:hover,
         body::-webkit-scrollbar-thumb:hover,
         #root::-webkit-scrollbar-thumb:hover,
-        .main::-webkit-scrollbar-thumb:hover {
+        .main::-webkit-scrollbar-thumb:hover,
+        .right::-webkit-scrollbar-thumb:hover,
+        #right-panel::-webkit-scrollbar-thumb:hover {
           background: #bfcfe3 !important;
         }
 
@@ -578,6 +656,71 @@ export default function WorkflowsPage() {
         }
         .right::-webkit-scrollbar-thumb:hover {
           background: #bfcfe3 !important;
+        }
+        .image-preview-container {
+          position: relative;
+          display: inline-block;
+        }
+        .image-preview-img {
+          max-width: 180px;
+          max-height: 120px;
+          border-radius: 6px;
+          border: 1px solid #eee;
+        }
+        .image-remove-btn {
+          position: absolute;
+          top: 2px;
+          right: 2px;
+          background: rgba(0,0,0,0.6);
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 22px;
+          height: 22px;
+          cursor: pointer;
+          font-weight: bold;
+          line-height: 18px;
+          text-align: center;
+          padding: 0;
+          z-index: 2;
+        }
+        .image-remove-btn:focus {
+          outline: 2px solid #34c759;
+        }
+        .working-post-textarea {
+          resize: both !important;
+          overflow: auto;
+          min-height: 120px;
+          max-width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+        }
+        .working-post-textarea::-webkit-resizer {
+          background: #dde3ec;
+          border-radius: 2px;
+          width: 16px;
+          height: 16px;
+        }
+        .img-icon-btn {
+          background: #f4f7fa;
+          border: 1px solid #bfcfe3;
+          border-radius: 8px;
+          padding: 4px 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 40px;
+          width: 40px;
+          transition: background 0.2s, border 0.2s;
+          margin-right: 4px;
+          box-shadow: 0 1px 2px rgba(52,199,89,0.04);
+        }
+        .img-icon-btn:hover {
+          background: #e6f9ed;
+          border-color: #34c759;
+        }
+        .img-icon-btn:active {
+          background: #d1f5e1;
         }
       `}</style>
     </AlphaMindDashboardLayout>
