@@ -11,9 +11,9 @@ import type { MultiValue } from 'react-select' // 需安装 @types/react-select
 // const SUBMIT_WEBHOOK = "http://host.docker.internal:5678/webhook/webpage-social";
 // const PREVIEW_WEBHOOK = "http://host.docker.internal:5678/webhook/preview";
 // const APPROVAL_WEBHOOK = "http://host.docker.internal:5678/webhook/approve-social-post";
-const SUBMIT_WEBHOOK = process.env.NEXT_PUBLIC_SUBMIT_WEBHOOK || 'http://host.docker.internal:5678/webhook/webpage-social'
-const PREVIEW_WEBHOOK = process.env.NEXT_PUBLIC_PREVIEW_WEBHOOK || 'http://host.docker.internal:5678/webhook/preview'
-const APPROVAL_WEBHOOK = process.env.NEXT_PUBLIC_APPROVAL_WEBHOOK || 'http://host.docker.internal:5678/webhook/approve-social-post'
+const SUBMIT_WEBHOOK = process.env.NEXT_PUBLIC_SUBMIT_WEBHOOK || 'http://localhost:5678/webhook/webpage-social'
+const PREVIEW_WEBHOOK = process.env.NEXT_PUBLIC_PREVIEW_WEBHOOK || 'http://localhost:5678/webhook/preview'
+const APPROVAL_WEBHOOK = process.env.NEXT_PUBLIC_APPROVAL_WEBHOOK || 'http://localhost:5678/webhook/approve-social-post'
 const PROVIDER_OPTIONS = [
   'Ollama',
   'OpenAI',
