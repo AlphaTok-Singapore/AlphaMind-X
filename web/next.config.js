@@ -1,13 +1,9 @@
 /** @type {import('next').NextConfig} */
-const withMDX = require('@next/mdx')({
-  extension: /\.mdx?$/,
-  options: {},
-})
 
 const nextConfig = {
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://alphamind-api-1:5001',
-    NEXT_PUBLIC_DIFY_API_URL: process.env.NEXT_PUBLIC_DIFY_API_URL || 'http://alphamind-api-1:5001',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://api:5001',
+    NEXT_PUBLIC_DIFY_API_URL: process.env.NEXT_PUBLIC_DIFY_API_URL || 'http://api:5001',
   },
   webpack: (config, { dev, isServer }) => {
     // 解决 Windows 路径大小写问题
@@ -47,10 +43,6 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/api/alphamind/:path*',
-        destination: 'http://alphamind-alphamind-api-1:8000/api/:path*',
-      },
-      {
         source: '/console/api/:path*',
         destination: 'http://api:5001/console/api/:path*',
       },
@@ -71,4 +63,4 @@ const nextConfig = {
   },
 }
 
-module.exports = withMDX(nextConfig)
+module.exports = nextConfig
