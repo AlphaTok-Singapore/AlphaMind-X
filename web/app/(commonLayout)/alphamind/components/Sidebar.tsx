@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -16,8 +16,8 @@ import {
 } from 'lucide-react'
 
 const navigation = [
-  { name: 'Dashboard', href: '/alphamind', icon: Home },
   { name: 'Chat', href: '/alphamind/chat', icon: MessageSquare },
+  { name: 'Dashboard', href: '/alphamind', icon: Home },
   { name: 'Agents', href: '/alphamind/agents', icon: Bot },
   { name: 'Data', href: '/alphamind/data', icon: Database },
   { name: 'Workflows', href: '/alphamind/workflows', icon: Workflow },
@@ -32,27 +32,13 @@ type SidebarProps = {
 
 export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname()
-  const [isHovered, setIsHovered] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
-
-  // 当收缩状态且悬停时，通知父组件展开侧边栏
-  useEffect(() => {
-    if (isCollapsed && isHovered) {
-      // 通知父组件展开侧边栏
-      onToggleCollapse()
-    }
-  }, [isCollapsed, isHovered, onToggleCollapse])
 
   return (
     <div
       className={`relative h-full border-r border-gray-200 bg-white shadow-sm transition-all duration-300 ease-in-out ${
         isCollapsed ? 'w-16' : 'w-full'
       }`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => {
-        setIsHovered(false)
-        setHoveredItem(null)
-      }}
     >
       {/* 收缩按钮 */}
       <button
@@ -103,7 +89,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
                   {!isCollapsed && item.name}
                 </Link>
 
-                {/* 悬停提示 - 只在收缩状态且未展开时显示 */}
+                {/* 悬停提示 - 只在收缩状态时显示 */}
                 {isCollapsed && hoveredItem === item.name && (
                   <div className="absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2">
                     <div className="whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white shadow-lg">
