@@ -1,0 +1,1665 @@
+{
+  "name": "AI_social_post_generator_grok",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webpage-social",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "1-Webhook Entry",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -4096,
+        -96
+      ],
+      "webhookId": "webpage-social",
+      "id": "903beb60-1b82-4aed-91de-579b44ddbcaf"
+    },
+    {
+      "parameters": {
+        "jsCode": "const manual = $json.body[\"Manual Content (if webpage blocked)\"] || '';\nconst url = $json.body[\"Webpage URL\"] || '';\nconst model = $json.body[\"Ollama Model\"];\nconst seoPrompt = $json.body[\"seoPrompt\"] || '';\nconst postPrompt = $json.body[\"postPrompt\"] || '';\nconst provider = $json.body[\"Provider\"] || 'Ollama';\nconst platforms = $json.body[\"Target Platforms\"] || [];\n\nreturn [{\n  json: {\n    html: manual.trim(),\n    url,\n    model,\n    provider,\n    seoPrompt,\n    postPrompt,\n    platforms,\n    hasManualContent: manual.trim().length > 0\n  }\n}];"
+      },
+      "name": "2-Prepare Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -3888,
+        -112
+      ],
+      "id": "5429a743-88fd-413c-87f8-efa24e7bc99c"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.hasManualContent }}",
+              "value2": "={{ false }}"
+            }
+          ]
+        }
+      },
+      "name": "3-IF Manual Missing",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -3760,
+        -32
+      ],
+      "id": "dd42284c-ccef-4802-9d76-f82720b27497"
+    },
+    {
+      "parameters": {
+        "jsCode": "const url = $json.url;\nconst provider = $json.provider;\nconst model = $json.model;\n\nasync function fetchHtml(url) {\n  try {\n    const html = await this.helpers.httpRequest({\n      method: 'GET',\n      url,\n      headers: {\n        'User-Agent': 'Mozilla/5.0'\n      }\n    });\n    return html;\n  } catch (error) {\n    return '';\n  }\n}\n\nreturn (async () => {\n  const html = await fetchHtml(url);\n  return [{ json: { html, provider, model, url } }];\n})();"
+      },
+      "name": "4-Code Fetch & Check HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -3648,
+        -208
+      ],
+      "id": "be383b4c-7405-4e4e-a6a9-23692a4f45f5"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.html }}",
+              "operation": "isEmpty"
+            }
+          ]
+        }
+      },
+      "name": "4c-IF HTML Missing",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -3520,
+        -208
+      ],
+      "id": "7dfc16f2-6488-44c6-81e2-6d801e606a03"
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://puppeteer:3001/scrape",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "url",
+              "value": "={{ $json.url && $json.url.startsWith('http') ? $json.url : 'about:blank' }}"
+            }
+          ]
+        }
+      },
+      "name": "4b-Get HTML via Puppeteer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -3296,
+        -208
+      ],
+      "id": "64b217a0-f5cf-41b0-88d5-b6d6eb2b7721"
+    },
+    {
+      "parameters": {
+        "jsCode": "// --- Helper Functions ---\n\n/**\n * Extracts content from the <title> tag.\n * @param {string} html The full HTML string.\n * @returns {string} The trimmed title text.\n */\nfunction extractTitle(html) {\n  if (!html) return '';\n  const match = html.match(/<title[^>]*>([^<]*)<\\/title>/i);\n  return match ? match[1].trim() : '';\n}\n\n/**\n * Extracts the main text content, preserving basic structure like paragraphs.\n * This is a dependency-free alternative to a full DOM parser.\n * @param {string} html The full HTML string.\n * @returns {{text: string, method: string}} An object containing the extracted text and the method used.\n */\nfunction extractMainText(html) {\n  if (!html) return { text: '', method: 'No HTML provided' };\n\n  // 1. First, strip out script and style tags completely as they contain no readable content.\n  let cleanHtml = html\n    .replace(/<script[^>]*>[\\s\\S]*?<\\/script>/gi, '')\n    .replace(/<style[^>]*>[\\s\\S]*?<\\/style>/gi, '');\n\n  let contentBlock = '';\n  let method = '';\n\n  // 2. Try to find the most semantic content block.\n  const mainMatch = cleanHtml.match(/<main[^>]*>([\\s\\S]*?)<\\/main>/i);\n  const articleMatch = cleanHtml.match(/<article[^>]*>([\\s\\S]*?)<\\/article>/i);\n\n  if (mainMatch && mainMatch[1]) {\n    contentBlock = mainMatch[1];\n    method = 'Extracted from <main> tag';\n  } else if (articleMatch && articleMatch[1]) {\n    contentBlock = articleMatch[1];\n    method = 'Extracted from <article> tag';\n  } else {\n    // Fallback to the entire body if no semantic tags are found.\n    const bodyMatch = cleanHtml.match(/<body[^>]*>([\\s\\S]*?)<\\/body>/i);\n    contentBlock = bodyMatch && bodyMatch[1] ? bodyMatch[1] : cleanHtml;\n    method = 'Fallback to <body> content';\n  }\n  \n  // 3. Intelligently convert HTML to structured text.\n  const structuredText = contentBlock\n    // Replace block-level elements with newlines to preserve paragraphs.\n    .replace(/<\\/(p|div|h[1-6]|blockquote|li|tr|th|td)>/gi, '\\n')\n    // Handle list items to make them readable.\n    .replace(/<li[^>]*>/gi, '* ')\n    // Strip all remaining HTML tags.\n    .replace(/<[^>]+>/g, ' ')\n    // Decode common HTML entities.\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&quot;/g, '\"')\n    // Normalize whitespace: multiple newlines to a max of two, and clean up spaces.\n    .replace(/\\n\\s*\\n/g, '\\n\\n')\n    .replace(/[\\t ]{2,}/g, ' ')\n    .trim();\n\n  return { text: structuredText, method };\n}\n\n\n// --- Main Logic ---\n\nconst html = $json.html || '';\nconst seoPromptTemplate = $node['2-Prepare Content'].json.seoPrompt || '';\n\nif (!html || html.trim() === '') {\n  return [{ json: { error: 'No HTML content provided from previous node.' } }];\n}\nif (!seoPromptTemplate || seoPromptTemplate.trim() === '') {\n  return [{ json: {\n    error: 'No SEO prompt provided from frontend',\n    html,\n    debug: 'Frontend must provide seoPrompt parameter'\n  } }];\n}\n\n// Extract content using the new functions\nconst title = extractTitle(html);\nconst { text: mainText, method: extractionMethod } = extractMainText(html);\n\n// Combine title and main text for the final content payload\nlet contentToUse = '';\nif (title && mainText) {\n  contentToUse = title + '\\n\\n' + mainText;\n} else if (mainText) {\n  contentToUse = mainText;\n} else if (title) {\n  contentToUse = title;\n} else {\n  contentToUse = 'No available content could be extracted.';\n}\n\n// Populate the SEO prompt template\nconst template = seoPromptTemplate;\nlet seoPrompt = template.replace(/{content}/g, contentToUse);\n// Also replace legacy placeholders for backward compatibility\nseoPrompt = seoPrompt\n  .replace(/\\{\\{\\s*\\$json\\.html\\s*\\|\\|\\s*\\$json\\.body\\s*\\}\\}/g, contentToUse)\n  .replace(/\\{\\{\\$json\\.html\\}\\}/g, contentToUse)\n  .replace(/\\{\\{\\$json\\.body\\}\\}/g, contentToUse);\n\n// Return the final, structured output\nreturn [{\n  json: {\n    html, // Original HTML\n    title,\n    mainText, // The structured text extracted\n    extractedContent: contentToUse, // The final combined content for the prompt\n    seoPrompt,\n    \n    // Pass-through parameters for the next node\n    postPrompt: $node['2-Prepare Content'].json.postPrompt,\n    model: $node['2-Prepare Content'].json.model,\n    provider: $node['2-Prepare Content'].json.provider,\n    \n    // Detailed debug information\n    debug: {\n      extractionMethod,\n      contentLength: contentToUse.length,\n      extractedContentPreview: contentToUse.substring(0, 500) + '...',\n    }\n  }\n}];\n"
+      },
+      "name": "5-Set Prompt (SEO)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -3280,
+        160
+      ],
+      "id": "f73ca25f-d198-426c-b180-5d875e0fd6ca"
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "output": "={{ $json.provider === 'Ollama' ? 0 : ($json.provider === 'OpenAI' ? 1 : ($json.provider === 'Deepseek' ? 2 : -1)) }}"
+      },
+      "name": "6-Provider Switch (SEO)",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        -3136,
+        -64
+      ],
+      "id": "c42a351f-14fa-4948-8ffa-a17921d89e11"
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:11434/api/generate",
+        "jsonParameters": true,
+        "options": {
+          "timeout": 180000
+        },
+        "bodyParametersJson": "={{ JSON.stringify({ model: $json.model || 'qwen2.5vl:7b', prompt: $json.seoPrompt || 'Extract topic, keywords and hashtags from the content.', stream: false }) }}"
+      },
+      "name": "7-Ollama Extract",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -2912,
+        -384
+      ],
+      "id": "2d96c613-daf8-47a0-882d-28574184f8df"
+    },
+    {
+      "parameters": {
+        "functionCode": "let raw = $json.response || '';\nif (!raw || raw.trim() === '') {\n  return [{ json: { Topic: 'No content generated', Keywords: ['AI', 'automation'], Hashtags: ['#AI', '#automation'], model: $json.model || '', provider: 'Ollama', postPrompt: $json.postPrompt || $node[\"2-Prepare Content\"].json.postPrompt, debug: 'Empty response from Ollama', requestData: JSON.stringify($input) } }];\n}\n\nraw = raw.replace(/^``````$/, '').replace(/^``````$/, '').trim();\n\nraw = raw.replace(/[\\s\\S]*?/gi, '').trim();\n\nlet parsed = {};\ntry { \n  parsed = JSON.parse(raw); \n} catch (e) { \n  const topicMatch = raw.match(/\"Topic\"\\s*:\\s*\"([^\"]+)\"/i);\n  const keywordsMatch = raw.match(/\"Keywords\"\\s*:\\s*\\[([^\\]]+)\\]/i);\n  const hashtagsMatch = raw.match(/\"Hashtags\"\\s*:\\s*\\[([^\\]]+)\\]/i);\n  \n  parsed = { \n    Topic: topicMatch ? topicMatch[1] : 'Failed to parse: ' + raw.substring(0, 100), \n    Keywords: keywordsMatch ? keywordsMatch[1].split(',').map(k => k.trim().replace(/\"/g, '')) : ['parsing', 'error'], \n    Hashtags: hashtagsMatch ? hashtagsMatch[1].split(',').map(h => h.trim().replace(/\"/g, '')) : ['#error'],\n    debug: 'JSON parse failed: ' + e.message,\n    rawResponse: raw\n  }; \n}\n\nreturn [{ json: { ...parsed, model: $json.model || '', provider: 'Ollama', postPrompt: $json.postPrompt || $node[\"2-Prepare Content\"].json.postPrompt } }];"
+      },
+      "name": "7a-Parse Ollama JSON",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -2784,
+        -384
+      ],
+      "id": "885079f9-d10f-42e0-a83a-7b7e921cd9ea"
+    },
+    {
+      "parameters": {
+        "functionCode": "const choices = $json.choices || [];\nlet rawContent = '';\nif (choices.length > 0 && choices[0].message) { rawContent = choices[0].message.content; }\nlet parsedData = {};\ntry { parsedData = JSON.parse(rawContent); } catch (e) { parsedData = { Topic: 'Error parsing JSON' }; }\nreturn [{ json: { ...parsedData, model: $json.model, provider: 'OpenAI', postPrompt: $node['5-Set Prompt (SEO)'].json.postPrompt } }];"
+      },
+      "name": "8a-Parse OpenAI JSON",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -2784,
+        -160
+      ],
+      "id": "f3f31dea-4b81-455d-b62e-2cbd0c7f82da"
+    },
+    {
+      "parameters": {
+        "functionCode": "// The HTTP Request node returns a parsed JSON object.\n// The AI's response is nested inside choices[0].message.content.\nconst choices = $json.choices || [];\nlet rawContent = '';\n\nif (choices.length > 0 && choices[0].message && choices[0].message.content) {\n  rawContent = choices[0].message.content;\n}\n\nif (!rawContent) {\n  return [{\n    json: {\n      Topic: 'Error: No content in response',\n      Keywords: [],\n      Hashtags: [],\n      debug: 'Deepseek API response did not contain the expected content.',\n      apiResponse: $json\n    }\n  }];\n}\n\nlet parsedData = {};\ntry {\n  // The content itself should be a JSON string, as requested from the API.\n  parsedData = JSON.parse(rawContent);\n} catch (e) {\n  return [{\n    json: {\n      Topic: 'Error: Failed to parse JSON',\n      Keywords: ['parsing', 'error'],\n      Hashtags: ['#error'],\n      debug: 'The content from Deepseek was not valid JSON: ' + e.message,\n      rawContent: rawContent\n    }\n  }];\n}\n\n// Combine the parsed data with other necessary info and pass it on.\nreturn [{\n  json: {\n    ...parsedData,\n    // CORRECTED: Get model from the API response ($json)\n    model: $json.model || 'deepseek-chat',\n    provider: 'Deepseek',\n    // CORRECTED: Get postPrompt from the node that prepared it\n    postPrompt: $node[\"5-Set Prompt (SEO)\"].json.postPrompt || $node[\"2-Prepare Content\"].json.postPrompt\n  }\n}];\n"
+      },
+      "name": "9a-Parse Deepseek JSON",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -2752,
+        64
+      ],
+      "id": "51ee68a3-1176-45f4-a427-e1524aad7f04"
+    },
+    {
+      "parameters": {
+        "functionCode": "const result = {\n  Topic: $json.Topic || 'General topic',\n  Keywords: $json.Keywords || ['AI', 'automation'],\n  Hashtags: $json.Hashtags || ['#AI', '#automation'],\n  provider: $json.provider || $node[\"2-Prepare Content\"].json.provider || 'Ollama',\n  model: $json.model || $node[\"2-Prepare Content\"].json.model || 'qwen2.5vl:7b',\n  postPrompt: $json.postPrompt || $node[\"2-Prepare Content\"].json.postPrompt || 'Please write a social media post based on the following topic and keywords. Requirements:\\n\\n1. Start with an engaging title or opening\\n2. Body in 2-3 paragraphs with blank lines between them\\n3. Content should have practical value and insights\\n4. End with an encouraging call for interaction\\n5. Add relevant hashtags on a separate line at the end\\n\\nTopic: {topic}\\nKeywords: {keywords}\\nSuggested hashtags: {hashtags}\\n\\nPlease output in the following social media post format (do not include labels like \\\"Title:\\\", \\\"Hook:\\\", \\\"CTA:\\\"):\\n\\n[Engaging opening/title]\\n\\n[First paragraph - Introduce the topic]\\n\\n[Second paragraph - Core point or value]\\n\\n[Third paragraph - Call for interaction]\\n\\n[hashtags]'\n};\nreturn [{ json: result }];\n"
+      },
+      "name": "10-Parse SEO JSON",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -2560,
+        -224
+      ],
+      "id": "9505b221-f2f7-42b9-8e69-a43b658300cb"
+    },
+    {
+      "parameters": {
+        "jsCode": "let topic = $json.Topic || 'Unknown topic';\nlet keywords = $json.Keywords || [];\nlet hashtags = $json.Hashtags || [];\nlet postPromptTemplate = $json.postPrompt || '';\n\n// 必须使用前端传入的提示词，不允许硬编码\nif (!postPromptTemplate || postPromptTemplate.trim() === '') {\n  return [{ json: { \n    error: 'No post prompt provided from frontend',\n    topic,\n    keywords,\n    hashtags,\n    debug: 'Frontend must provide postPrompt parameter'\n  } }];\n}\n\nlet template = postPromptTemplate;\n\nlet postPrompt = template\n  .replace(/{topic}/g, topic)\n  .replace(/{keywords}/g, keywords.join(', '))\n  .replace(/{hashtags}/g, hashtags.join(' '))\n  .replace(/\\{\\{\\s*\\$json\\.Topic\\s*\\}\\}/g, topic)\n  .replace(/\\{\\{\\s*\\(\\$json\\.Keywords\\s*\\|\\|\\s*\\[\\]\\)\\.join\\(.*?\\)\\s*\\}\\}/g, keywords.join(', '))\n  .replace(/\\{\\{\\s*\\(\\$json\\.Hashtags\\s*\\|\\|\\s*\\[\\]\\)\\.join\\(.*?\\)\\s*\\}\\}/g, hashtags.join(' '));\n\nlet debugPostTemplate = template;\nlet debugTopicUsed = topic;\nlet debugKeywordsUsed = keywords.join(', ');\nlet debugHashtagsUsed = hashtags.join(' ');\nlet debugPostPrompt = postPrompt;\nlet debugPostTemplateUsed = 'frontend-provided';\n\nreturn [{ json: {\n  ...$json,\n  postPrompt,\n  debugPostTemplate,\n  debugTopicUsed,\n  debugKeywordsUsed,\n  debugHashtagsUsed,\n  debugPostPrompt,\n  debugPostTemplateUsed\n} }];"
+      },
+      "name": "11-Set Post Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -2544,
+        48
+      ],
+      "id": "b17d58cf-07d4-4848-9e3e-5811a931f565"
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "output": "={{ $json.provider === 'Ollama' ? 0 : ($json.provider === 'OpenAI' ? 1 : ($json.provider === 'Deepseek' ? 2 : -1)) }}"
+      },
+      "name": "12-Provider Switch (Post)",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        -2352,
+        32
+      ],
+      "id": "d14bc874-0ae1-455d-a783-1020597d0473"
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://host.docker.internal:11434/api/generate",
+        "jsonParameters": true,
+        "options": {
+          "timeout": 180000
+        },
+        "bodyParametersJson": "={{ JSON.stringify({ model: $json.model || 'qwen2.5vl:7b', prompt: $json.postPrompt || 'Generate a social media post.', stream: false }) }}"
+      },
+      "name": "13-Ollama Generate Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -2192,
+        -304
+      ],
+      "id": "c9ae74f1-deab-494b-a96e-784db2127135"
+    },
+    {
+      "parameters": {
+        "functionCode": "let raw = $json.response || '';\nif (!raw || raw.trim() === '') {\n  return [{\n    json: {\n      post: 'Error: No content generated from Ollama. Check model and prompt.',\n      model: $json.model || '',\n      provider: 'Ollama',\n      debug: 'Empty response from Ollama',\n      requestData: JSON.stringify($input)\n    }\n  }];\n}\n\nraw = raw.replace(/^```\\w*\\s*\\n/, '').replace(/\\n\\s*```$/, '').trim();\n\nif (raw.startsWith('\"') && raw.endsWith('\"')) {\n  raw = raw.slice(1, -1);\n}\n\nraw = raw.replace(/<think>[\\s\\S]*?<\\/think>/gi, '').trim();\n\nfunction formatSocialPost(content) {\n  let formatted = content\n    .replace(/^标题[:：]\\s*/gm, 'Title: ')\n    .replace(/^钩子[:：]\\s*/gm, 'Hook: ')\n    .replace(/^CTA[:：]\\s*/gm, 'CTA: ')\n    .replace(/^正文[:：]\\s*/gm, 'Body: ')\n    .replace(/^内容[:：]\\s*/gm, 'Content: ')\n    .replace(/^文案[:：]\\s*/gm, 'Copy: ')\n    .replace(/^Call to Action[:：]\\s*/gmi, 'Call to Action: ')\n    .replace(/^行动号召[:：]\\s*/gm, 'Action Call: ')\n    .replace(/^\\[.*?\\]\\s*/gm, '')\n    .replace(/<think>[\\s\\S]*?<\\/think>/gi, '')\n    .replace(/##/g, '#');\n\n  const lines = formatted.split('\\n');\n  const processedLines = [];\n  const allHashtags = [];\n\n  for (let i = 0; i < lines.length; i++) {\n    const line = lines[i];\n    const trimmedLine = line.trim();\n    if (trimmedLine === '') {\n      // Preserve blank lines for paragraph separation\n      processedLines.push('');\n      continue;\n    }\n\n    // Handle double ## tag lines\n    if (trimmedLine.match(/^##[\\w\\s#]+$/)) {\n      const cleanLine = trimmedLine.replace(/##/g, '#');\n      allHashtags.push(cleanLine);\n    } else if (trimmedLine.match(/^#[\\w\\s#]+$/)) {\n      allHashtags.push(trimmedLine);\n    } else if (trimmedLine.includes('#') && trimmedLine.split('#').length > 2) {\n      const parts = trimmedLine.split(/(?=#)/);\n      const textPart = parts[0].trim();\n      const hashtagPart = parts.slice(1).map(h => {\n        let tag = h.trim();\n        // Clean double # tags\n        if (tag.startsWith('#')) {\n          tag = tag.replace(/^#+/, '#');\n        } else {\n          tag = '#' + tag;\n        }\n        return tag;\n      }).join(' ');\n\n      if (textPart) processedLines.push(textPart);\n      if (hashtagPart) allHashtags.push(hashtagPart);\n    } else {\n      processedLines.push(trimmedLine);\n    }\n  }\n\n  let result = processedLines.join('\\n');\n\n  if (allHashtags.length > 0) {\n    // Clean double # tags in hashtags and merge all hashtags into one line\n    const cleanHashtags = allHashtags.map(tag => tag.replace(/#+/g, '#').trim()).filter(tag => tag.length > 0).join(' ');\n    // Only add separator when there is content to avoid empty lines\n    if (result.trim()) {\n      result += '\\n' + cleanHashtags;\n    } else {\n      result = cleanHashtags;\n    }\n  }\n\n  return result.trim();\n}\n\nconst formattedPost = formatSocialPost(raw);\n\nreturn [{\n  json: {\n    post: formattedPost,\n    rawPost: raw,\n    model: $json.model || '',\n    provider: 'Ollama',\n    debug: 'Successfully parsed and formatted post'\n  }\n}];"
+      },
+      "name": "13a-Parse Ollama Post",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -2016,
+        -416
+      ],
+      "id": "8def3078-a143-4f5c-85ed-6340bd7ea8ad"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "previewContent",
+              "value": "={{ JSON.stringify($json) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "16-Cache Preview",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -1888,
+        96
+      ],
+      "id": "4ee06897-2d23-4229-9d79-703476feba8e"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "17-Return Preview",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -1776,
+        304
+      ],
+      "id": "9c249219-0587-44bd-895e-661cb27eb77c"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n json: {\n post: $json.body.post || $json.post || '',\n platforms: $json.body.platforms || $json.platforms || [],\n images: $json.body.images || [],\n model: $json.body.model || $json.model || '',\n provider: $json.body.provider || $json.provider || 'Ollama',\n approvedAt: new Date().toISOString()\n }\n}];"
+      },
+      "name": "19-Parse Approval Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -1552,
+        -80
+      ],
+      "id": "dec11840-8c20-4018-ba52-909cc441c408"
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "linkedInOAuth2Api",
+        "url": "https://api.linkedin.com/v2/me",
+        "options": {}
+      },
+      "name": "20a-Get LinkedIn User ID",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -1152,
+        -544
+      ],
+      "id": "d1307a87-e27a-455f-8c2d-419b6b92c92d",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "XcGpu0HUIYvAkc81",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "authorURN",
+              "value": "={{ 'urn:li:person:' + $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "20b-Set Author URN",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -992,
+        -544
+      ],
+      "id": "98162bc9-edba-4f87-8265-7f8c01e58179"
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "linkedInOAuth2Api",
+        "requestMethod": "POST",
+        "url": "https://api.linkedin.com/v2/ugcPosts",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "{\n  \"author\": \"{{ $json.authorURN }}\",\n  \"lifecycleState\": \"PUBLISHED\",\n  \"specificContent\": {\n    \"com.linkedin.ugc.ShareContent\": {\n      \"shareCommentary\": {\n        \"text\": \"{{ $json.post.replace(/\\n/g, '\\\\n') }}\"\n      },\n      \"shareMediaCategory\": \"NONE\"\n    }\n  },\n  \"visibility\": {\n    \"com.linkedin.ugc.MemberNetworkVisibility\": \"PUBLIC\"\n  }\n}"
+      },
+      "name": "21-Post to LinkedIn",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -752,
+        -544
+      ],
+      "id": "81769843-58f2-4e1f-a16f-f1250e1704a6",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "XcGpu0HUIYvAkc81",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "url": "https://graph.facebook.com/v20.0/me/accounts",
+        "options": {}
+      },
+      "name": "22a-Get Facebook Pages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        -304
+      ],
+      "id": "ef358071-3308-4a7a-815f-105ffccbd6b4",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "Ql9rjIM3ehMvUHNY",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "facebookPageId",
+              "value": "={{ $json.data && $json.data[0] ? $json.data[0].id : '' }}"
+            },
+            {
+              "name": "facebookPageToken",
+              "value": "={{ $json.data && $json.data[0] ? $json.data[0].access_token : '' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "22b-Set Facebook Page ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        -304
+      ],
+      "id": "31776f49-6f47-4440-8565-b578cfc78bd6"
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "requestMethod": "POST",
+        "url": "={{ $json.facebookPageId ? 'https://graph.facebook.com/v20.0/' + $json.facebookPageId + '/feed' : 'https://graph.facebook.com/v20.0/invalid/feed' }}",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "message",
+              "value": "={{$json.post}}"
+            }
+          ]
+        }
+      },
+      "name": "22-Post to Facebook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -672,
+        -304
+      ],
+      "id": "c3492f7a-ffb2-4895-9293-f0ad9a61e6d3",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "Ql9rjIM3ehMvUHNY",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "url": "https://graph.facebook.com/v20.0/me/accounts?fields=instagram_business_account",
+        "options": {}
+      },
+      "name": "23a-Get IG Account",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -992,
+        -80
+      ],
+      "id": "52f35b9f-5c2f-44ca-9714-c90bc0a1dda4",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "Ql9rjIM3ehMvUHNY",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const pageData = ($json.data && $json.data.length > 0) ? $json.data[0] : {};\nconst igBusinessId = (pageData.instagram_business_account && pageData.instagram_business_account.id) || '17841469701122871';\nreturn [{ json: { ...$json, igBusinessId } }];"
+      },
+      "name": "23b-Set IG ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -832,
+        -80
+      ],
+      "id": "2f0ec7b9-0857-4664-8dda-571bb0007db2"
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "requestMethod": "POST",
+        "url": "={{ 'https://graph.facebook.com/v20.0/' + $json.igBusinessId + '/media' }}",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{ { \"caption\": $json.post } }}"
+      },
+      "name": "23d-Create IG Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -672,
+        -80
+      ],
+      "id": "013d8a60-2822-4c82-953c-ffc1563ba3a8",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "Ql9rjIM3ehMvUHNY",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "requestMethod": "POST",
+        "url": "={{ 'https://graph.facebook.com/v20.0/' + $json.igBusinessId + '/media_publish' }}",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{ { \"creation_id\": $json.id } }}"
+      },
+      "name": "23e-Publish IG Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        -80
+      ],
+      "id": "4a11dcc0-81e0-4371-9538-11967b556360",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "Ql9rjIM3ehMvUHNY",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "name": "25-Merge Publish Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        -64
+      ],
+      "id": "05a3672d-5c0e-4748-a0a1-ab75db0f3a23"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "26-Respond Approval Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        16,
+        128
+      ],
+      "id": "116770a6-5eb7-4332-aeba-698c4f1af75e"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "approve-social-post",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": "={{ true }}"
+        }
+      },
+      "name": "18-Wait Approval",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1584,
+        -272
+      ],
+      "webhookId": "ef897c96-4502-4c3f-ab63-1833cfef5253",
+      "id": "74d2650a-428b-4138-ae33-186e9c0ec37d"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "18-Approval Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        128,
+        336
+      ],
+      "id": "2de240ed-bf90-4557-8884-1094e3c70abd"
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET,POST",
+        "path": "instagram-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "9a1b5dcb-56ea-4c52-b0d0-81612dd5608b",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -4032,
+        416
+      ],
+      "webhookId": "instagram-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "fb8b42e5-4f57-4acc-a4de-d71c7bb83578",
+              "leftValue": "={{ $json.query['hub.mode'] }}",
+              "rightValue": "subscribe",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "f1e9e6b8-2a5c-4d3e-8f7b-1c9a8b7d6e5f",
+              "leftValue": "={{ $json.query['hub.verify_token'] }}",
+              "rightValue": "test12345",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combineOperation": "all"
+        },
+        "options": {}
+      },
+      "id": "5fc55213-66b7-4477-afa7-f5e2efc6bd03",
+      "name": "Verification Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -3808,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.challenge'] }}",
+        "options": {}
+      },
+      "id": "0778218b-0a9a-440c-b75e-22784bce5908",
+      "name": "Return Challenge",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -3584,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Invalid verification token",
+        "options": {
+          "responseCode": 403
+        }
+      },
+      "id": "5114c86a-4fa8-43d1-b7c2-c80b71d91c54",
+      "name": "Return Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -3584,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "deepSeekApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"model\": $json.model || \"deepseek-chat\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": $json.seoPrompt\n    }\n  ],\n  \"response_format\": { \"type\": \"json_object\" },\n  \"stream\": false\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2928,
+        64
+      ],
+      "id": "4377ffc1-5ab0-4d08-b6d7-c6363544190a",
+      "name": "9-Deepseek Extract",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "3x1ieT3fLVoVoaHX",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "deepSeekApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"model\": $json.model || \"deepseek-chat\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": $json.postPrompt\n    }\n  ],\n  \"stream\": false\n}) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2192,
+        256
+      ],
+      "id": "d45ab979-fd9a-4ce7-a62f-55bb793a775b",
+      "name": "15-Deepseek Generate Post",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "3x1ieT3fLVoVoaHX",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"model\": $json.model || \"gpt-4o\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a helpful assistant designed to output JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": $json.seoPrompt\n    }\n  ],\n  \"response_format\": { \"type\": \"json_object\" },\n  \"stream\": false\n}) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2944,
+        -176
+      ],
+      "id": "35e011e0-2009-4484-ab45-c840d64b0d23",
+      "name": "8-OpenAI Extract",
+      "credentials": {
+        "openAiApi": {
+          "id": "C6lfweGLQVTPtA9H",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"model\": $json.model || \"gpt-4o\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": $json.postPrompt\n    }\n  ],\n  \"stream\": false\n}) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2176,
+        -48
+      ],
+      "id": "9cc123c3-da31-4286-95ae-8b5446a9d7f9",
+      "name": "14-OpenAI Generate Post",
+      "credentials": {
+        "openAiApi": {
+          "id": "C6lfweGLQVTPtA9H",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const choices = $json.choices || [];\nlet postContent = '';\nif (choices.length > 0 && choices[0].message && choices[0].message.content) { postContent = choices[0].message.content; }\nconst model = $json.model || 'unknown_model';\nlet provider = model.startsWith('gpt') ? 'OpenAI' : (model.startsWith('deepseek') ? 'Deepseek' : 'Unknown');\nreturn [{ json: { ...$json, post: postContent.trim(), provider, model } }];"
+      },
+      "name": "14a-Parse Cloud API Post",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -2032,
+        128
+      ],
+      "id": "c532773a-12fd-4b42-b57d-f2f128019d0a"
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "name": "Split In Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 2,
+      "position": [
+        -1408,
+        -16
+      ],
+      "id": "c8de117c-e4b8-4589-84f3-a23457cba36d"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.images && $json.images.length > 0}}",
+              "value2": "={{ true }}"
+            }
+          ]
+        }
+      },
+      "id": "0c92a5ef-a727-4ee7-9be6-518698e9e3a3",
+      "name": "24-IF Image Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -1184,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const images = $json.images || [];\n\nif (images.length > 0) {\n  // The input image is a data URL like \"data:image/jpeg;base64,...\"\n  const imageDataUrl = images[0];\n  \n  // Split the string to isolate the base64 data and mime type\n  const parts = imageDataUrl.split(';base64,');\n  const mimeType = parts[0].split(':')[1];\n  const base64Data = parts[1];\n  \n  // Return the data in the format n8n expects for binary files.\n  // The 'data' key under 'binary' will create a binary property named 'data'.\n  // Subsequent nodes can access this file using an expression like: {{$binary.data}}\n  return [{\n    json: $json,\n    binary: {\n      data: {\n        data: base64Data,\n        fileName: 'image.jpg',\n        mimeType: mimeType\n      }\n    }\n  }];\n}\n\n// If no image exists, return the original item without changes\nreturn [{ json: $json }];\n"
+      },
+      "id": "f400fb64-26ab-4be1-8439-07bd1ecfafe7",
+      "name": "24a-Convert Image",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1024,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://upload.twitter.com/1.1/media/upload.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "twitterOAuth1Api",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "media",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a9a56c09-aa7d-40ca-a80e-abd8cb853e0f",
+      "name": "24b-Upload Image to X",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -848,
+        304
+      ],
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "P5rP7HvxuSFiKavq",
+          "name": "X account"
+        },
+        "twitterOAuth1Api": {
+          "id": "r3GZ8gqhBdUPaEv5",
+          "name": "X OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twitter.com/2/tweets",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "twitterOAuth1Api",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.post }}"
+            },
+            {
+              "name": "media",
+              "value": "={{ { \"media_ids\": [$json.media_id_string] } }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5fa90c74-d72a-4117-a312-75764f41100e",
+      "name": "24c-Post Tweet with Media",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -528,
+        160
+      ],
+      "credentials": {
+        "twitterOAuth1Api": {
+          "id": "r3GZ8gqhBdUPaEv5",
+          "name": "X OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twitter.com/2/tweets",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "twitterOAuth1Api",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.post }} "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "18cf58d0-7094-46d5-8b68-dafa543906d4",
+      "name": "24z-Post Text-Only Tweet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -656,
+        576
+      ],
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "P5rP7HvxuSFiKavq",
+          "name": "X account"
+        },
+        "twitterOAuth1Api": {
+          "id": "r3GZ8gqhBdUPaEv5",
+          "name": "X OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $node[\"Split In Batches\"].context[\"noMoreValues\"] === false }}",
+              "value2": "={{ true }}"
+            }
+          ]
+        }
+      },
+      "name": "25a-IF More Batches",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        -64
+      ],
+      "id": "df5c14db-88f0-45e1-a482-7f2ea4280a51"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.platforms[0] }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "LinkedIn"
+            },
+            {
+              "value2": "Facebook",
+              "output": 1
+            },
+            {
+              "value2": "Instagram",
+              "output": 2
+            },
+            {
+              "value2": "X",
+              "output": 3
+            }
+          ]
+        }
+      },
+      "name": "21-Platform Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        -1280,
+        -208
+      ],
+      "id": "b454832b-466a-4d7a-ae78-d64d521f2013",
+      "nodeNumber": 6
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -720,
+        176
+      ],
+      "id": "71063868-9a53-4f55-82c5-00c98c67bd68",
+      "name": "Merge"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "1-Webhook Entry": {
+      "main": [
+        [
+          {
+            "node": "2-Prepare Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2-Prepare Content": {
+      "main": [
+        [
+          {
+            "node": "3-IF Manual Missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3-IF Manual Missing": {
+      "main": [
+        [
+          {
+            "node": "4-Code Fetch & Check HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "5-Set Prompt (SEO)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4-Code Fetch & Check HTML": {
+      "main": [
+        [
+          {
+            "node": "4c-IF HTML Missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4c-IF HTML Missing": {
+      "main": [
+        [
+          {
+            "node": "4b-Get HTML via Puppeteer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "5-Set Prompt (SEO)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4b-Get HTML via Puppeteer": {
+      "main": [
+        [
+          {
+            "node": "5-Set Prompt (SEO)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5-Set Prompt (SEO)": {
+      "main": [
+        [
+          {
+            "node": "6-Provider Switch (SEO)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6-Provider Switch (SEO)": {
+      "main": [
+        [
+          {
+            "node": "7-Ollama Extract",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "8-OpenAI Extract",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "9-Deepseek Extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7-Ollama Extract": {
+      "main": [
+        [
+          {
+            "node": "7a-Parse Ollama JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7a-Parse Ollama JSON": {
+      "main": [
+        [
+          {
+            "node": "10-Parse SEO JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8-OpenAI Extract": {
+      "main": [
+        [
+          {
+            "node": "8a-Parse OpenAI JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8a-Parse OpenAI JSON": {
+      "main": [
+        [
+          {
+            "node": "10-Parse SEO JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9-Deepseek Extract": {
+      "main": [
+        [
+          {
+            "node": "9a-Parse Deepseek JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9a-Parse Deepseek JSON": {
+      "main": [
+        [
+          {
+            "node": "10-Parse SEO JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10-Parse SEO JSON": {
+      "main": [
+        [
+          {
+            "node": "11-Set Post Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "11-Set Post Prompt": {
+      "main": [
+        [
+          {
+            "node": "12-Provider Switch (Post)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "12-Provider Switch (Post)": {
+      "main": [
+        [
+          {
+            "node": "13-Ollama Generate Post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "14-OpenAI Generate Post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "15-Deepseek Generate Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "13-Ollama Generate Post": {
+      "main": [
+        [
+          {
+            "node": "13a-Parse Ollama Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "13a-Parse Ollama Post": {
+      "main": [
+        [
+          {
+            "node": "16-Cache Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "14-OpenAI Generate Post": {
+      "main": [
+        [
+          {
+            "node": "14a-Parse Cloud API Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "14a-Parse Cloud API Post": {
+      "main": [
+        [
+          {
+            "node": "16-Cache Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "15-Deepseek Generate Post": {
+      "main": [
+        [
+          {
+            "node": "14a-Parse Cloud API Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "16-Cache Preview": {
+      "main": [
+        [
+          {
+            "node": "17-Return Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "18-Wait Approval": {
+      "main": [
+        [
+          {
+            "node": "19-Parse Approval Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "19-Parse Approval Input": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches": {
+      "main": [
+        [
+          {
+            "node": "21-Platform Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "20a-Get LinkedIn User ID": {
+      "main": [
+        [
+          {
+            "node": "20b-Set Author URN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "20b-Set Author URN": {
+      "main": [
+        [
+          {
+            "node": "21-Post to LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "21-Post to LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "25-Merge Publish Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "22a-Get Facebook Pages": {
+      "main": [
+        [
+          {
+            "node": "22b-Set Facebook Page ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "22b-Set Facebook Page ID": {
+      "main": [
+        [
+          {
+            "node": "22-Post to Facebook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "22-Post to Facebook": {
+      "main": [
+        [
+          {
+            "node": "25-Merge Publish Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "23a-Get IG Account": {
+      "main": [
+        [
+          {
+            "node": "23b-Set IG ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "23b-Set IG ID": {
+      "main": [
+        [
+          {
+            "node": "23d-Create IG Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "23d-Create IG Container": {
+      "main": [
+        [
+          {
+            "node": "23e-Publish IG Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "23e-Publish IG Post": {
+      "main": [
+        [
+          {
+            "node": "25-Merge Publish Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "24-IF Image Exists?": {
+      "main": [
+        [
+          {
+            "node": "24a-Convert Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "24z-Post Text-Only Tweet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "24a-Convert Image": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "24b-Upload Image to X",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "24b-Upload Image to X": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "24c-Post Tweet with Media": {
+      "main": [
+        [
+          {
+            "node": "25-Merge Publish Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "24z-Post Text-Only Tweet": {
+      "main": [
+        [
+          {
+            "node": "25-Merge Publish Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "25-Merge Publish Results": {
+      "main": [
+        [
+          {
+            "node": "25a-IF More Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "25a-IF More Batches": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "26-Respond Approval Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "26-Respond Approval Result": {
+      "main": [
+        [
+          {
+            "node": "18-Approval Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Verification Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verification Check": {
+      "main": [
+        [
+          {
+            "node": "Return Challenge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "21-Platform Switch": {
+      "main": [
+        [
+          {
+            "node": "20a-Get LinkedIn User ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "22a-Get Facebook Pages",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "23a-Get IG Account",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "24-IF Image Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "24c-Post Tweet with Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "05a4ed00-f864-46c2-9c64-0db5015ed236",
+  "meta": {
+    "instanceId": "5bd350cdf438b8337e86b6a07c0089dc12a2465558e0e77f5da8f5f877bf6079"
+  },
+  "id": "BnASb4XUxT4upH8u",
+  "tags": []
+}

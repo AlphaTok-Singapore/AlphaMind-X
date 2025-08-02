@@ -6,7 +6,7 @@ WORKDIR /app
 RUN apk add --no-cache git curl
 
 # 安装 pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@latest
 
 # 复制 package 文件和锁文件
 COPY package*.json pnpm-lock.yaml ./

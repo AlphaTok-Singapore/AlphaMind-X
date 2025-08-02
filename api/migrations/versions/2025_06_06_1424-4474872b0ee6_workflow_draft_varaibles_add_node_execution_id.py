@@ -18,20 +18,28 @@ depends_on = None
 
 
 def upgrade():
+    # Check if index already exists
+    inspector = sa.inspect(op.get_bind())
+    existing_indexes = inspector.get_indexes('workflow_node_executions')
+    index_name = 'workflow_node_executions_tenant_id_idx'
+
+    index_exists = any(index['name'] == index_name for index in existing_indexes)
+
     # `CREATE INDEX CONCURRENTLY` cannot run within a transaction, so use the `autocommit_block`
     # context manager to wrap the index creation statement.
     # Reference:
     #
     # - https://www.postgresql.org/docs/current/sql-createindex.html#:~:text=Another%20difference%20is,CREATE%20INDEX%20CONCURRENTLY%20cannot.
     # - https://alembic.sqlalchemy.org/en/latest/api/runtime.html#alembic.runtime.migration.MigrationContext.autocommit_block
-    with op.get_context().autocommit_block():
-        op.create_index(
-            op.f('workflow_node_executions_tenant_id_idx'),
-            "workflow_node_executions",
-            ['tenant_id', 'workflow_id', 'node_id', sa.literal_column('created_at DESC')],
-            unique=False,
-            postgresql_concurrently=True,
-        )
+    if not index_exists:
+        with op.get_context().autocommit_block():
+            op.create_index(
+                op.f('workflow_node_executions_tenant_id_idx'),
+                "workflow_node_executions",
+                ['tenant_id', 'workflow_id', 'node_id', sa.literal_column('created_at DESC')],
+                unique=False,
+                postgresql_concurrently=True,
+            )
 
     with op.batch_alter_table('workflow_draft_variables', schema=None) as batch_op:
         batch_op.add_column(sa.Column('node_execution_id', models.types.StringUUID(), nullable=True))

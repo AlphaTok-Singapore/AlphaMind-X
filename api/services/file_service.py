@@ -75,6 +75,7 @@ class FileService:
         # save file to db
         upload_file = UploadFile(
             tenant_id=current_tenant_id or "",
+            type="file",
             storage_type=dify_config.STORAGE_TYPE,
             key=file_key,
             name=filename,
@@ -126,6 +127,7 @@ class FileService:
         # save file to db
         upload_file = UploadFile(
             tenant_id=current_user.current_tenant_id,
+            type="text",
             storage_type=dify_config.STORAGE_TYPE,
             key=file_key,
             name=text_name,

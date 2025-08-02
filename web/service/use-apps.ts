@@ -11,7 +11,7 @@ const useAppFullListKey = [NAME_SPACE, 'full-list']
 export const useAppFullList = () => {
   return useQuery<AppListResponse>({
     queryKey: useAppFullListKey,
-    queryFn: () => get<AppListResponse>('/apps', { params: { page: 1, limit: 100 } }),
+    queryFn: () => get<AppListResponse>('/apps', { params: { name: '', mode: 'chat', page: 1, limit: 100 } }),
   })
 }
 

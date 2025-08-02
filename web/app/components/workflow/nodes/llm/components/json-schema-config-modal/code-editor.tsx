@@ -111,6 +111,7 @@ const CodeEditor: FC<CodeEditorProps> = ({
                   type='button'
                   className='flex h-6 w-6 items-center justify-center'
                   onClick={formatJsonContent}
+                  aria-label={t('common.operation.format')}
                 >
                   <RiIndentIncrease className='h-4 w-4 text-text-tertiary' />
                 </button>
@@ -120,7 +121,9 @@ const CodeEditor: FC<CodeEditorProps> = ({
               <button
                 type='button'
                 className='flex h-6 w-6 items-center justify-center'
-                onClick={() => copy(value)}>
+                onClick={() => copy(value)}
+                aria-label={t('common.operation.copy')}
+              >
                 <RiClipboardLine className='h-4 w-4 text-text-tertiary' />
               </button>
             </Tooltip>

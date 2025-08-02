@@ -30,7 +30,7 @@ api = ExternalApi(bp)
 
 # File
 api.add_resource(FileApi, "/files/upload")
-api.add_resource(FilePreviewApi, "/files/<uuid:file_id>/preview")
+api.add_resource(FilePreviewApi, "/files/<uuid:file_id>/text-preview")
 api.add_resource(FileSupportTypeApi, "/files/support-type")
 
 # Remote files

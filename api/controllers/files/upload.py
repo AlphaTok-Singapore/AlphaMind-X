@@ -90,4 +90,4 @@ class PluginUploadFileApi(Resource):
         return tool_file, 201
 
 
-api.add_resource(PluginUploadFileApi, "/files/upload/for-plugin")
+api.add_resource(PluginUploadFileApi, "/upload/for-plugin")

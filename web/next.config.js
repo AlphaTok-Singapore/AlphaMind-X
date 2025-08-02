@@ -6,9 +6,22 @@ const withMDX = require('@next/mdx')({
 
 const nextConfig = {
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://alphamind-api-1:5001',
-    NEXT_PUBLIC_DIFY_API_URL: process.env.NEXT_PUBLIC_DIFY_API_URL || 'http://alphamind-api-1:5001',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001',
+    NEXT_PUBLIC_DIFY_API_URL: process.env.NEXT_PUBLIC_DIFY_API_URL || 'http://localhost:5001',
   },
+
+            // 启用SWC压缩以获得更快的构建
+          // swcMinify: true, // Commented out due to Next.js version compatibility
+
+  // 启用压缩
+  compress: true,
+
+  // 优化图像
+  images: {
+    domains: ['localhost'],
+    unoptimized: false,
+  },
+
   webpack: (config, { dev, isServer }) => {
     // 解决 Windows 路径大小写问题
     if (dev && !isServer) {
@@ -29,44 +42,52 @@ const nextConfig = {
           '**/*.md',
           '**/*.txt',
           '**/*.log',
+          '**/temp/**', // Add this to ignore temp files
         ],
-        aggregateTimeout: 500,
-        poll: 2000,
+        aggregateTimeout: 500, // Increase timeout to reduce rebuilds
+        poll: 2000, // Increase poll interval
       }
       config.resolve.symlinks = false
+
+      // 开发模式优化 - 完全禁用vendors chunk以避免语法错误
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: false, // 完全禁用代码分割以避免vendors.js错误
+      }
     }
 
     return config
   },
-  experimental: {
-    // 禁用文件系统缓存避免路径问题
-    turbo: {
-      rules: {},
-    },
-  },
+            experimental: {
+            // 启用Turbo
+            turbo: {
+              rules: {},
+            },
+          },
   async rewrites() {
     return [
       {
-        source: '/api/alphamind/:path*',
-        destination: 'http://alphamind-alphamind-api-1:8000/api/:path*',
-      },
-      {
         source: '/console/api/:path*',
-        destination: 'http://api:5001/console/api/:path*',
+        destination: 'http://localhost:5001/console/api/:path*',
       },
       {
         source: '/api/:path*',
-        destination: 'http://api:5001/api/:path*',
+        destination: 'http://localhost:5001/api/:path*',
+      },
+      {
+        source: '/files/:path*',
+        destination: 'http://localhost:5001/files/:path*',
       },
     ]
   },
   async redirects() {
     return [
-      {
-        source: '/console',
-        destination: '/apps',
-        permanent: false,
-      },
+      // 移除 /console 重定向，因为我们已经创建了 /console 页面
+      // {
+      //   source: '/console',
+      //   destination: '/apps',
+      //   permanent: false,
+      // },
     ]
   },
 }

@@ -1,10 +1,4 @@
-import './globals.css'
-import type { Metadata } from 'next'
-
-export const metadata: Metadata = {
-  title: 'AlphaMind - AI Agent Management',
-  description: 'Advanced AI agent management and automation platform',
-}
+import React from 'react'
 
 export default function RootLayout({
   children,

@@ -53,15 +53,16 @@ def init_app(app: DifyApp):
 
     app.register_blueprint(inner_api_bp)
 
-    app.register_blueprint(alphamind_auth_bp)
+    # Comment out AlphaMind custom blueprints to use standard Dify API
+    # app.register_blueprint(alphamind_auth_bp)
 
-    app.register_blueprint(features_bp)
-    app.register_blueprint(console_features_bp)
+    # app.register_blueprint(features_bp)
+    # app.register_blueprint(console_features_bp)
 
-    app.register_blueprint(account_bp)
+    # app.register_blueprint(account_bp)
 
-    app.register_blueprint(api_compat_bp)
+    # app.register_blueprint(api_compat_bp)
 
-    app.register_blueprint(console_api_bp)
+    # app.register_blueprint(console_api_bp)
 
-    app.register_blueprint(settings_compat_bp)
+    # app.register_blueprint(settings_compat_bp)

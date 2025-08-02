@@ -114,6 +114,6 @@ class WorkspaceWebappLogoApi(Resource):
         return Response(generator, mimetype=mimetype)
 
 
-api.add_resource(ImagePreviewApi, "/files/<uuid:file_id>/image-preview")
-api.add_resource(FilePreviewApi, "/files/<uuid:file_id>/file-preview")
-api.add_resource(WorkspaceWebappLogoApi, "/files/workspaces/<uuid:workspace_id>/webapp-logo")
+api.add_resource(ImagePreviewApi, "/<uuid:file_id>/image-preview")
+api.add_resource(FilePreviewApi, "/<uuid:file_id>/file-preview")
+api.add_resource(WorkspaceWebappLogoApi, "/workspaces/<uuid:workspace_id>/webapp-logo")

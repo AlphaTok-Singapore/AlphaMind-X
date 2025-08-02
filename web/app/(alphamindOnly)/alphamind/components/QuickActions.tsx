@@ -2,7 +2,6 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Bot, Database, MessageSquare } from 'lucide-react'
 
 export default function QuickActions() {
   const actions = [
@@ -10,21 +9,18 @@ export default function QuickActions() {
       name: 'Start New Chat',
       description: 'Begin a conversation with an AI agent',
       href: '/alphamind/chat',
-      icon: MessageSquare,
       color: 'bg-blue-500',
     },
     {
       name: 'Create Agent',
       description: 'Set up a new AI assistant',
       href: '/alphamind/agents',
-      icon: Bot,
       color: 'bg-green-500',
     },
     {
       name: 'Upload Data',
       description: 'Add new training data or documents',
       href: '/alphamind/data',
-      icon: Database,
       color: 'bg-purple-500',
     },
   ]
@@ -40,7 +36,7 @@ export default function QuickActions() {
             className="flex items-center rounded-lg p-3 transition-colors hover:bg-gray-50"
           >
             <div className={`rounded-lg p-2 ${action.color} mr-3`}>
-              <action.icon className="h-5 w-5 text-white" />
+              <div className="h-5 w-5 text-white">•</div>
             </div>
             <div>
               <h4 className="font-medium text-gray-900">{action.name}</h4>

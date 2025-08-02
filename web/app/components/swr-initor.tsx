@@ -56,36 +56,9 @@ const SwrInitor = ({
           router.replace('/install')
           return
         }
-        // 如果当前在登录页面，不需要检查登录状态
-        if (pathname === '/signin' || pathname.startsWith('/signin/')) {
-          setInit(true)
-          return
-        }
         if (!((consoleToken && refreshToken) || (consoleTokenFromLocalStorage && refreshTokenFromLocalStorage))) {
           router.replace('/signin')
           return
-        }
-
-        // 验证 token 有效性
-        const tokenToVerify = consoleToken || consoleTokenFromLocalStorage
-        if (tokenToVerify) {
-          try {
-            const response = await fetch('/console/api/account/profile', {
-              headers: { 'Authorization': `Bearer ${tokenToVerify}` },
-            })
-            if (!response.ok) {
-              localStorage.removeItem('console_token')
-              localStorage.removeItem('refresh_token')
-              router.replace('/signin')
-              return
-            }
-          }
-          catch {
-            localStorage.removeItem('console_token')
-            localStorage.removeItem('refresh_token')
-            router.replace('/signin')
-            return
-          }
         }
         if (searchParams.has('access_token') || searchParams.has('refresh_token')) {
           consoleToken && localStorage.setItem('console_token', consoleToken)

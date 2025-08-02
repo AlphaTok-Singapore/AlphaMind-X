@@ -360,12 +360,14 @@ function AppScreenShot({ mode, show }: { mode: AppMode; show: boolean }) {
     'completion': 'TextGenerator',
     'workflow': 'Workflow',
   }
+  // Provide fallback theme to prevent undefined in URL
+  const currentTheme = theme || 'light'
   return <picture>
-    <source media="(resolution: 1x)" srcSet={`${basePath}/screenshots/${theme}/${modeToImageMap[mode]}.png`} />
-    <source media="(resolution: 2x)" srcSet={`${basePath}/screenshots/${theme}/${modeToImageMap[mode]}@2x.png`} />
-    <source media="(resolution: 3x)" srcSet={`${basePath}/screenshots/${theme}/${modeToImageMap[mode]}@3x.png`} />
+    <source media="(resolution: 1x)" srcSet={`${basePath}/screenshots/${currentTheme}/${modeToImageMap[mode]}.png`} />
+    <source media="(resolution: 2x)" srcSet={`${basePath}/screenshots/${currentTheme}/${modeToImageMap[mode]}@2x.png`} />
+    <source media="(resolution: 3x)" srcSet={`${basePath}/screenshots/${currentTheme}/${modeToImageMap[mode]}@3x.png`} />
     <Image className={show ? '' : 'hidden'}
-      src={`${basePath}/screenshots/${theme}/${modeToImageMap[mode]}.png`}
+      src={`${basePath}/screenshots/${currentTheme}/${modeToImageMap[mode]}.png`}
       alt='App Screen Shot'
       width={664} height={448} />
   </picture>

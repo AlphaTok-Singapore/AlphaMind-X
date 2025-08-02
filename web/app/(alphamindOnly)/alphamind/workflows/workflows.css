@@ -1,0 +1,276 @@
+/* Workflows page styles - scoped to workflows page only */
+.workflows-page .mt-8px {
+  margin-top: 8px;
+}
+
+.workflows-page .left-panel-custom {
+  min-width: 320px;
+  max-width: 900px;
+  box-sizing: border-box;
+}
+
+.workflows-page .left-panel-dynamic {
+  width: var(--left-width);
+}
+
+.workflows-page .image-preview-list {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.workflows-page .hidden-input {
+  display: none;
+}
+
+.workflows-page .working-post-textarea {
+  resize: both !important;
+  overflow: auto;
+  min-height: 120px;
+  flex-grow: 1;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.workflows-page .working-post-textarea.no-flex-grow {
+  flex-grow: 0 !important;
+}
+
+.workflows-page .left,
+.workflows-page .right {
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.workflows-page .left {
+  flex: none !important;
+}
+
+.workflows-page .right {
+  min-width: 300px;
+  max-width: 100vw;
+  border-left: 1px solid #dde3ec;
+  position: relative;
+}
+
+.workflows-page .splitter {
+  transition: background 0.2s;
+}
+
+.workflows-page .splitter:hover {
+  background: #bfcfe3;
+}
+
+.workflows-page .working-post-textarea::-webkit-resizer {
+  background: #dde3ec;
+  border-radius: 2px;
+  width: 16px;
+  height: 16px;
+}
+
+.workflows-page .left-textarea {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.workflows-page input[type="text"] {
+  resize: horizontal;
+}
+
+@media (max-width: 900px) {
+  .workflows-page .left,
+  .workflows-page .right,
+  .workflows-page .splitter {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  .workflows-page .flex-col.md\:flex-row {
+    flex-direction: column !important;
+  }
+}
+
+.workflows-page .left,
+.workflows-page .right {
+  margin-top: 0 !important;
+  padding-top: 0.5rem !important;
+}
+
+.workflows-page textarea::-webkit-scrollbar,
+.workflows-page .working-post-textarea::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.workflows-page textarea::-webkit-scrollbar-thumb,
+.workflows-page .working-post-textarea::-webkit-scrollbar-thumb {
+  background: #dde3ec;
+  border-radius: 4px;
+}
+
+.workflows-page textarea::-webkit-scrollbar-thumb:hover,
+.workflows-page .working-post-textarea::-webkit-scrollbar-thumb:hover {
+  background: #bfcfe3;
+}
+
+.workflows-page textarea,
+.workflows-page .working-post-textarea {
+  scrollbar-width: thin;
+  scrollbar-color: #dde3ec transparent;
+}
+
+.workflows-page .image-preview-container {
+  position: relative;
+  display: inline-block;
+}
+
+.workflows-page .image-preview-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #dde3ec;
+}
+
+.workflows-page .image-remove-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.workflows-page .image-remove-btn:hover {
+  background: #dc2626;
+}
+
+.workflows-page .image-remove-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5);
+}
+
+.workflows-page .working-post-textarea {
+  resize: both !important;
+  overflow: auto;
+  min-height: 120px;
+  flex-grow: 1;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.workflows-page .working-post-textarea::-webkit-resizer {
+  background: #dde3ec;
+  border-radius: 2px;
+  width: 16px;
+  height: 16px;
+}
+
+.workflows-page .img-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-right: 8px;
+}
+
+.workflows-page .img-icon-btn:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.workflows-page .img-icon-btn:active {
+  background: #d1d5db;
+  transform: scale(0.95);
+}
+
+/* React Select 样式覆盖 - 匹配其他表单元素 */
+.workflows-page .react-select__control {
+  border: 1px solid #bfcfe3 !important;
+  background-color: #f9fbfd !important;
+  border-radius: 8px !important;
+  min-height: 42px !important;
+}
+
+.workflows-page .react-select__control:hover {
+  border-color: #bfcfe3 !important;
+}
+
+.workflows-page .react-select__control--is-focused {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 1px #3b82f6 !important;
+}
+
+.workflows-page .react-select__input-container {
+  color: #111827 !important;
+}
+
+.workflows-page .react-select__placeholder {
+  color: #6b7280 !important;
+}
+
+.workflows-page .react-select__single-value {
+  color: #111827 !important;
+}
+
+.workflows-page .react-select__multi-value {
+  background-color: #e5e7eb !important;
+  border-radius: 4px !important;
+}
+
+.workflows-page .react-select__multi-value__label {
+  color: #374151 !important;
+}
+
+.workflows-page .react-select__multi-value__remove {
+  color: #6b7280 !important;
+}
+
+.workflows-page .react-select__multi-value__remove:hover {
+  background-color: #d1d5db !important;
+  color: #374151 !important;
+}
+
+.workflows-page .react-select__menu {
+  border: 1px solid #bfcfe3 !important;
+  background-color: #ffffff !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+.workflows-page .react-select__option {
+  color: #111827 !important;
+  background-color: #ffffff !important;
+}
+
+.workflows-page .react-select__option:hover {
+  background-color: #f3f4f6 !important;
+}
+
+.workflows-page .react-select__option--is-selected {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+.workflows-page .react-select__option--is-focused {
+  background-color: #f3f4f6 !important;
+}

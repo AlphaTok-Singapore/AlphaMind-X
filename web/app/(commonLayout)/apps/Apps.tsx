@@ -42,17 +42,17 @@ const getKey = (
   keywords: string,
 ) => {
   if (!pageIndex || previousPageData.has_more) {
-    const params: any = { url: 'apps', params: { page: pageIndex + 1, limit: 30, name: keywords, is_created_by_me: isCreatedByMe } }
+    const params: any = { name: keywords, page: pageIndex + 1, limit: 30, is_created_by_me: isCreatedByMe }
 
     if (activeTab !== 'all')
-      params.params.mode = activeTab
+      params.mode = activeTab
     else
-      delete params.params.mode
+      params.mode = 'chat' // Default mode
 
     if (tags.length)
-      params.params.tag_ids = tags
+      params.tag_ids = tags
 
-    return params
+    return { url: 'apps', params }
   }
   return null
 }
@@ -213,14 +213,13 @@ const Apps = () => {
           </div>}
 
         {isCurrentWorkspaceEditor && (
-          <div
+          <section
             className={`flex items-center justify-center gap-2 py-4 ${dragging ? 'text-text-accent' : 'text-text-quaternary'}`}
-            role="region"
             aria-label={t('app.newApp.dropDSLToCreateApp')}
           >
             <RiDragDropLine className="h-4 w-4" />
             <span className="system-xs-regular">{t('app.newApp.dropDSLToCreateApp')}</span>
-          </div>
+          </section>
         )}
         <CheckModal />
         <div ref={anchorRef} className='h-0'> </div>

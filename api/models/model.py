@@ -1548,6 +1548,7 @@ class UploadFile(Base):
 
     id: Mapped[str] = db.Column(StringUUID, server_default=db.text("uuid_generate_v4()"))
     tenant_id: Mapped[str] = db.Column(StringUUID, nullable=False)
+    type: Mapped[str] = db.Column(db.String(255), nullable=False)
     storage_type: Mapped[str] = db.Column(db.String(255), nullable=False)
     key: Mapped[str] = db.Column(db.String(255), nullable=False)
     name: Mapped[str] = db.Column(db.String(255), nullable=False)
@@ -1569,6 +1570,7 @@ class UploadFile(Base):
         self,
         *,
         tenant_id: str,
+        type: str,
         storage_type: str,
         key: str,
         name: str,
@@ -1585,6 +1587,7 @@ class UploadFile(Base):
         source_url: str = "",
     ):
         self.tenant_id = tenant_id
+        self.type = type
         self.storage_type = storage_type
         self.key = key
         self.name = name
@@ -1843,3 +1846,6 @@ class TraceAppConfig(Base):
             "created_at": str(self.created_at) if self.created_at else None,
             "updated_at": str(self.updated_at) if self.updated_at else None,
         }
+
+
+

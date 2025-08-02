@@ -54,4 +54,4 @@ class ToolFilePreviewApi(Resource):
         return response
 
 
-api.add_resource(ToolFilePreviewApi, "/files/tools/<uuid:file_id>.<string:extension>")
+api.add_resource(ToolFilePreviewApi, "/tools/<uuid:file_id>.<string:extension>")

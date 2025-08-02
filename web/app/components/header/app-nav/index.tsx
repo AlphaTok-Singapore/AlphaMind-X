@@ -17,6 +17,7 @@ import CreateAppTemplateDialog from '@/app/components/app/create-app-dialog'
 import CreateAppModal from '@/app/components/app/create-app-modal'
 import CreateFromDSLModal from '@/app/components/app/create-from-dsl-modal'
 import type { AppListResponse } from '@/models/app'
+import type { App } from '@/types/app'
 import { useAppContext } from '@/context/app-context'
 import { useStore as useAppStore } from '@/app/components/app/store'
 
@@ -27,14 +28,14 @@ const getKey = (
   keywords: string,
 ) => {
   if (!pageIndex || previousPageData.has_more) {
-    const params: any = { url: 'apps', params: { page: pageIndex + 1, limit: 30, name: keywords } }
+    const params: any = { name: keywords, page: pageIndex + 1, limit: 30 }
 
     if (activeTab !== 'all')
-      params.params.mode = activeTab
+      params.mode = activeTab
     else
-      delete params.params.mode
+      params.mode = 'chat' // Default mode
 
-    return params
+    return { url: 'apps', params }
   }
   return null
 }
@@ -73,7 +74,7 @@ const AppNav = () => {
   useEffect(() => {
     if (appsData) {
       const appItems = flatten(appsData?.map(appData => appData.data))
-      const navItems = appItems.map((app) => {
+      const navItems = appItems.map((app: App) => {
         const link = ((isCurrentWorkspaceEditor, app) => {
           if (!isCurrentWorkspaceEditor) {
             return `/app/${app.id}/overview`

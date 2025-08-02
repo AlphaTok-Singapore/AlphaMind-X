@@ -2,7 +2,7 @@ from flask import Blueprint
 
 from libs.external_api import ExternalApi
 
-bp = Blueprint("files", __name__)
+bp = Blueprint("files", __name__, url_prefix="/files")
 api = ExternalApi(bp)
 
 

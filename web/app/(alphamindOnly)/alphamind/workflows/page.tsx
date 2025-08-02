@@ -1,10 +1,11 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import AlphaMindDashboardLayout from '../components/AlphaMindDashboardLayout'
 import { defaultPostPrompt, defaultSeoPrompt } from './config'
 import Select from 'react-select'
 import type { MultiValue } from 'react-select' // 需安装 @types/react-select
+import './workflows.css'
 
 // Webhook URLs and model options from config.js
 // TODO: 本地开发用 http，生产请改为 https 并恢复下方注释
@@ -59,7 +60,7 @@ export default function WorkflowsPage() {
   const [approveLoading, setApproveLoading] = useState(false)
   const [leftWidth, setLeftWidth] = useState(480) // 初始左栏宽度
   const dragging = useRef(false)
-  const modelOptions = PROVIDER_MODEL_MAP[provider] || []
+  const modelOptions = useMemo(() => PROVIDER_MODEL_MAP[provider] || [], [provider])
   const [images, setImages] = useState<string[]>([])
   const [lastPreview, setLastPreview] = useState<{
     post: string
@@ -81,6 +82,11 @@ export default function WorkflowsPage() {
         setImages(prev => [...prev, ev.target!.result as string]) // base64
     }
     reader.readAsDataURL(file)
+  }
+
+  // 处理图片删除
+  const handleRemoveImage = (idx: number) => {
+    setImages(images => images.filter((_, i) => i !== idx))
   }
 
   const platformOptions = ['LinkedIn', 'Facebook', 'Instagram', 'X']
@@ -221,11 +227,11 @@ export default function WorkflowsPage() {
 
   return (
     <AlphaMindDashboardLayout>
-      <div className="relative flex min-h-[80vh] flex-col bg-[#f7f9fa] md:flex-row">
+      <div className="workflows-page relative flex min-h-[80vh] flex-col bg-[#f7f9fa] md:flex-row">
         {/* 左侧输入区 */}
         <div
-          className="left flex flex-col justify-between border-r border-[#dde3ec] bg-[#f4f7fa] p-4 md:p-6 left-panel-custom"
-          style={{ width: leftWidth }}
+          className="left left-panel-custom left-panel-dynamic flex flex-col justify-between border-r border-[#dde3ec] bg-[#f4f7fa] p-4 md:p-6"
+          style={{ '--left-width': `${leftWidth}px` } as React.CSSProperties}
         >
           <div>
             <h2 className="mb-3 text-xl font-bold text-[#1a1a1a]">Input Settings</h2>
@@ -246,7 +252,7 @@ export default function WorkflowsPage() {
                 <textarea
                   id="manual"
                   rows={4}
-                  className="left-textarea mb-2 rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none resize-both"
+                  className="left-textarea mb-2 resize-both rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none"
                   placeholder="Paste article content here..."
                   value={manual}
                   onChange={e => setManual(e.target.value)}
@@ -290,7 +296,7 @@ export default function WorkflowsPage() {
                 <textarea
                   id="seoPrompt"
                   rows={4}
-                  className="left-textarea mb-2 rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none resize-both"
+                  className="left-textarea mb-2 resize-both rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none"
                   placeholder="SEO prompt for the post..."
                   value={seoPrompt}
                   onChange={e => setSeoPrompt(e.target.value)}
@@ -301,7 +307,7 @@ export default function WorkflowsPage() {
                 <textarea
                   id="postPrompt"
                   rows={4}
-                  className="left-textarea mb-2 rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none resize-both"
+                  className="left-textarea mb-2 resize-both rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none"
                   placeholder="Post prompt for the post..."
                   value={postPrompt}
                   onChange={e => setPostPrompt(e.target.value)}
@@ -317,6 +323,7 @@ export default function WorkflowsPage() {
                   className="mb-2"
                   placeholder="Select one or more platforms"
                   inputId="platforms"
+                  classNamePrefix="react-select"
                 />
               </div>
               <div className="action-bar mb-2 flex gap-2">
@@ -352,27 +359,15 @@ export default function WorkflowsPage() {
           </div>
         </div>
         {/* 分割条 */}
-        <div
-          className="splitter"
-          style={{ width: 8, cursor: 'col-resize', background: '#dde3ec', zIndex: 10 }}
+        <button
+          className="splitter w-2 z-10 cursor-col-resize border-none bg-[#dde3ec] p-0"
           onMouseDown={() => { dragging.current = true }}
+          aria-label="Resize panel"
+          type="button"
         />
         {/* 右侧输出区 */}
         <div
-          className="right right-panel flex flex-col bg-white p-4 md:p-6"
-          style={{
-            position: 'relative',
-            borderLeft: '1px solid #dde3ec',
-            width: '100%',
-            minWidth: 300,
-            minHeight: 300,
-            height: '100%',
-            boxSizing: 'border-box',
-            overflow: 'auto',
-            // 移除 resize: 'none', 允许子元素自由resize
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#dde3ec #f4f7fa',
-          }}
+          className="right right-panel relative flex h-full min-h-[300px] min-w-[300px] w-full flex-col border-l border-[#dde3ec] bg-white p-4 box-border overflow-auto scrollbar-thin scrollbar-[#dde3ec] scrollbar-track-[#f4f7fa] md:p-6"
           id="right-panel"
         >
           <h2 className="mb-3 text-xl font-bold text-[#1a1a1a]">Output & Edit Area</h2>
@@ -380,27 +375,23 @@ export default function WorkflowsPage() {
           <textarea
             ref={textareaRef}
             id="finalPost"
-            className={`mb-2 rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none working-post-textarea${isResized ? ' no-flex-grow' : ''}`}
+            className={`mb-2 min-h-[120px] rounded-lg border border-[#bfcfe3] bg-[#f9fbfd] px-3 py-2 text-gray-900 focus:border-blue-400 focus:outline-none working-post-textarea box-border${isResized ? ' no-grow' : ''}`}
             placeholder="Generated content will appear here. Edit or co-create..."
             value={finalPost}
             onChange={e => setFinalPost(e.target.value)}
-            style={{
-              minHeight: '120px',
-              boxSizing: 'border-box',
-            }}
           />
           {/* 新增：图片上传与预览区 */}
           {images.length > 0 && (
             <div className="image-preview-list">
               {images.map((src, idx) => (
-                <div key={idx} className="image-preview-container">
+                <div key={`image-${src}-${idx}`} className="image-preview-container">
                   <img
                     src={src}
                     alt={`user-img-${idx}`}
                     className="image-preview-img"
                   />
                   <button
-                    onClick={() => setImages(images => images.filter((_, i) => i !== idx))}
+                    onClick={() => handleRemoveImage(idx)}
                     className="image-remove-btn"
                     title="Remove image"
                     aria-label="Remove image"
@@ -410,7 +401,7 @@ export default function WorkflowsPage() {
               ))}
             </div>
           )}
-          <div className="action-bar mb-2 flex gap-2 items-center">
+          <div className="action-bar mb-2 flex items-center gap-2">
             {/* Image upload icon button */}
             <button
               type="button"
@@ -454,275 +445,6 @@ export default function WorkflowsPage() {
           <pre className="status min-h-[50px] whitespace-pre-wrap break-words rounded-lg bg-[#f6f7f9] p-3 font-mono text-[15px] text-[#314365]">{preview}</pre>
         </div>
       </div>
-      <style jsx global>{`
-        .mt-8px { margin-top: 8px; }
-        .left-panel-custom {
-          min-width: 320px;
-          max-width: 900px;
-          box-sizing: border-box;
-        }
-        .image-preview-list {
-          margin-top: 8px;
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-        }
-        .hidden-input {
-          display: none;
-        }
-        .working-post-textarea {
-          resize: both !important;
-          overflow: auto;
-          min-height: 120px;
-          flex-grow: 1;
-          max-width: 100%;
-          min-width: 0;
-          box-sizing: border-box;
-        }
-        .working-post-textarea.no-flex-grow {
-          flex-grow: 0 !important;
-        }
-        .left, .right {
-          box-sizing: border-box;
-          overflow-y: auto;
-        }
-        .left {
-          flex: none !important;
-        }
-        .right {
-          min-width: 300px;
-          max-width: 100vw;
-          border-left: 1px solid #dde3ec;
-          position: relative;
-        }
-        .splitter {
-          transition: background 0.2s;
-        }
-        .splitter:hover {
-          background: #bfcfe3;
-        }
-        .working-post-textarea::-webkit-resizer {
-          background: #dde3ec;
-          border-radius: 2px;
-          width: 16px;
-          height: 16px;
-        }
-        .left-textarea {
-          width: 100% !important;
-          min-width: 0 !important;
-          max-width: 100% !important;
-        }
-        input[type="text"] {
-          resize: horizontal;
-        }
-        @media (max-width: 900px) {
-          .left, .right, .splitter {
-            min-width: 0 !important;
-            max-width: 100% !important;
-          }
-          .flex-col.md\:flex-row {
-            flex-direction: column !important;
-          }
-        }
-        .left, .right {
-          margin-top: 0 !important;
-          padding-top: 0.5rem !important;
-        }
-        /* Custom scrollbar for textarea, select, and right panel */
-        textarea::-webkit-scrollbar,
-        select::-webkit-scrollbar,
-        .right::-webkit-scrollbar,
-        #right-panel::-webkit-scrollbar {
-          width: 8px !important;
-          background: #f4f7fa !important;
-        }
-        textarea::-webkit-scrollbar-thumb,
-        select::-webkit-scrollbar-thumb,
-        .right::-webkit-scrollbar-thumb,
-        #right-panel::-webkit-scrollbar-thumb {
-          background: #dde3ec !important;
-          border-radius: 6px !important;
-        }
-        textarea::-webkit-scrollbar-thumb:hover,
-        select::-webkit-scrollbar-thumb:hover,
-        .right::-webkit-scrollbar-thumb:hover,
-        #right-panel::-webkit-scrollbar-thumb:hover {
-          background: #bfcfe3 !important;
-        }
-        textarea,
-        select,
-        .right,
-        #right-panel {
-          scrollbar-width: thin !important;
-          scrollbar-color: #dde3ec #f4f7fa !important;
-        }
-        /* 强制所有下拉菜单内容为深色字体 */
-        [class*='dropdown'], [class*='Dropdown'], [class*='menu'], [class*='Menu'], [role='menu'], [role='menu'] * {
-          color: #222 !important;
-          background: #fff !important;
-        }
-        /* 全局滚动条样式，确保页面和右侧panel一致 */
-        html, body, #__next, .main, .right, #right-panel {
-          scrollbar-width: thin !important;
-          scrollbar-color: #dde3ec #f4f7fa !important;
-        }
-        html::-webkit-scrollbar,
-        body::-webkit-scrollbar,
-        #root::-webkit-scrollbar,
-        .main::-webkit-scrollbar,
-        .right::-webkit-scrollbar,
-        #right-panel::-webkit-scrollbar {
-          width: 8px !important;
-          background: #f4f7fa !important;
-        }
-        html::-webkit-scrollbar-thumb,
-        body::-webkit-scrollbar-thumb,
-        #root::-webkit-scrollbar-thumb,
-        .main::-webkit-scrollbar-thumb,
-        .right::-webkit-scrollbar-thumb,
-        #right-panel::-webkit-scrollbar-thumb {
-          background: #dde3ec !important;
-          border-radius: 6px !important;
-        }
-        html::-webkit-scrollbar-thumb:hover,
-        body::-webkit-scrollbar-thumb:hover,
-        #root::-webkit-scrollbar-thumb:hover,
-        .main::-webkit-scrollbar-thumb:hover,
-        .right::-webkit-scrollbar-thumb:hover,
-        #right-panel::-webkit-scrollbar-thumb:hover {
-          background: #bfcfe3 !important;
-        }
-
-        /* 确保右侧面板滚动条样式 */
-        #right-panel::-webkit-scrollbar {
-          width: 8px !important;
-          background: #f4f7fa !important;
-        }
-        #right-panel::-webkit-scrollbar-thumb {
-          background: #dde3ec !important;
-          border-radius: 6px !important;
-        }
-        #right-panel::-webkit-scrollbar-thumb:hover {
-          background: #bfcfe3 !important;
-        }
-
-        /* 强制右侧面板滚动条样式 */
-        .right::-webkit-scrollbar {
-          width: 8px !important;
-          background: #f4f7fa !important;
-        }
-        .right::-webkit-scrollbar-thumb {
-          background: #dde3ec !important;
-          border-radius: 6px !important;
-        }
-        .right::-webkit-scrollbar-thumb:hover {
-          background: #bfcfe3 !important;
-        }
-
-        /* 确保右侧面板的滚动条样式优先级最高 */
-        div[style*="overflow: auto"]::-webkit-scrollbar {
-          width: 8px !important;
-          background: #f4f7fa !important;
-        }
-        div[style*="overflow: auto"]::-webkit-scrollbar-thumb {
-          background: #dde3ec !important;
-          border-radius: 6px !important;
-        }
-        div[style*="overflow: auto"]::-webkit-scrollbar-thumb:hover {
-          background: #bfcfe3 !important;
-        }
-
-        /* 针对右侧面板的特定样式 */
-        .right-panel::-webkit-scrollbar {
-          width: 8px !important;
-          background: #f4f7fa !important;
-        }
-        .right-panel::-webkit-scrollbar-thumb {
-          background: #dde3ec !important;
-          border-radius: 6px !important;
-        }
-        .right-panel::-webkit-scrollbar-thumb:hover {
-          background: #bfcfe3 !important;
-        }
-
-        /* 确保右侧面板滚动条可见且颜色正确 */
-        .right::-webkit-scrollbar {
-          width: 8px !important;
-          background: #f4f7fa !important;
-        }
-        .right::-webkit-scrollbar-thumb {
-          background: #dde3ec !important;
-          border-radius: 6px !important;
-        }
-        .right::-webkit-scrollbar-thumb:hover {
-          background: #bfcfe3 !important;
-        }
-        .image-preview-container {
-          position: relative;
-          display: inline-block;
-        }
-        .image-preview-img {
-          max-width: 180px;
-          max-height: 120px;
-          border-radius: 6px;
-          border: 1px solid #eee;
-        }
-        .image-remove-btn {
-          position: absolute;
-          top: 2px;
-          right: 2px;
-          background: rgba(0,0,0,0.6);
-          color: white;
-          border: none;
-          border-radius: 50%;
-          width: 22px;
-          height: 22px;
-          cursor: pointer;
-          font-weight: bold;
-          line-height: 18px;
-          text-align: center;
-          padding: 0;
-          z-index: 2;
-        }
-        .image-remove-btn:focus {
-          outline: 2px solid #34c759;
-        }
-        .working-post-textarea {
-          resize: both !important;
-          overflow: auto;
-          min-height: 120px;
-          max-width: 100%;
-          min-width: 0;
-          box-sizing: border-box;
-        }
-        .working-post-textarea::-webkit-resizer {
-          background: #dde3ec;
-          border-radius: 2px;
-          width: 16px;
-          height: 16px;
-        }
-        .img-icon-btn {
-          background: #f4f7fa;
-          border: 1px solid #bfcfe3;
-          border-radius: 8px;
-          padding: 4px 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          height: 40px;
-          width: 40px;
-          transition: background 0.2s, border 0.2s;
-          margin-right: 4px;
-          box-shadow: 0 1px 2px rgba(52,199,89,0.04);
-        }
-        .img-icon-btn:hover {
-          background: #e6f9ed;
-          border-color: #34c759;
-        }
-        .img-icon-btn:active {
-          background: #d1f5e1;
-        }
-      `}</style>
     </AlphaMindDashboardLayout>
   )
 }

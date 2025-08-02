@@ -917,7 +917,8 @@ class Embedding(Base):
     __table_args__ = (
         db.PrimaryKeyConstraint("id", name="embedding_pkey"),
         db.UniqueConstraint("model_name", "hash", "provider_name", name="embedding_hash_idx"),
-        db.Index("created_at_idx", "created_at"),
+        # 移除索引定义，因为索引已经通过迁移文件创建
+        # db.Index("created_at_idx", "created_at"),
     )
 
     id = db.Column(StringUUID, primary_key=True, server_default=db.text("uuid_generate_v4()"))
